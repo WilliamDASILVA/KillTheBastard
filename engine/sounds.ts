@@ -38,7 +38,7 @@ module Sounds{
 			if(elementsToDownload[i].state == "pending"){
 				var theAudio = preloadElement;
 				if(theAudio){
-					theAudio.src = elementsToDownload[i].path;
+					theAudio.src = "./" + elementsToDownload[i].path;
 					elementsToDownload[i].state = "downloading";
 					
 					var temp = elementsToDownload[i];

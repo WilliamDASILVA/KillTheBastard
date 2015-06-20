@@ -246,6 +246,7 @@ module Render{
 			this.depth = 0;
 			this.rotation = 0;
             this.setPosition(0, 0);
+            this.opacity = 1;
             this.type = "drawable";
             this.flipped = false;
             this.fixedToCenter = true;
@@ -1479,9 +1480,7 @@ module Render{
 			if(elementToDraw.isVisible(null)){
 				context.save();
 				// opacity
-				if(elementToDraw.getOpacity()){
-					context.globalAlpha = elementToDraw.getOpacity();
-				}
+				context.globalAlpha = elementToDraw.getOpacity();
 
 				// smooth
 				if(!elementToDraw.isSmooth()){

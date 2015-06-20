@@ -196,6 +196,17 @@ module UI{
         }
 
         /*    --------------------------------------------------- *\
+                [function] getElements()
+        
+                * Retourne tous les elements qui constituent cet UI *
+        
+                Return: elements
+        \*    --------------------------------------------------- */
+        getElements(){
+            return this.renderElements;
+        }
+
+        /*    --------------------------------------------------- *\
                 [function] click()
         
                 * Quand l'utilisateur clique sur la zone *
@@ -267,7 +278,9 @@ module UI{
     
     \*    --------------------------------------------------- */
     export class Button extends GUI{
-    
+        
+        value: string;
+
         /*    --------------------------------------------------- *\
                 [function] constructor(x, y, width, height, [optional : parent])
         
@@ -275,27 +288,54 @@ module UI{
         
                 Return: nil
         \*    --------------------------------------------------- */
-        constructor(x : number, y : number, width : number, height : number, ...rest : any[]){
+        constructor(x: number, y: number, width: number, height: number, ...rest: any[]) {
             super();
-            
-            if(rest[0]){
+
+            if (rest[0]) {
                 this.setParent(rest[0]);
                 this.setPosition(x, y, true);
             }
-            else{
+            else {
                 this.setPosition(x, y, false);
             }
 
             this.setSize(width, height);
+            this.value = "";
 
             var position = this.getPosition();
-            this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "#FF0000");
-            this.renderElements[0].setDepth(10);
+            this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "rgba(255,255,255,1)");
+            this.renderElements[1] = new Render.Draw.Text(position.x + width / 2, position.y + height / 2, this.value);
+            this.renderElements[1].setAlign("center");
+            this.renderElements[1].setBaseline("middle");
+            this.renderElements[1].setFontStyle("bold");
 
             for (var i = 0; i < this.renderElements.length; ++i) {
                 interfaceCanvas.set(this.renderElements[i]);
             }
             
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setValue(value)
+        
+                * Set le texte à l'intérieur du button *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setValue(value : string){
+            this.value;
+            this.renderElements[1].setValue(value);
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] getValue()
+        
+                * Retourne la valeur dans le button *
+        
+                Return: value
+        \*    --------------------------------------------------- */
+        getValue(){
+            return this.value;
         }
 
     }
