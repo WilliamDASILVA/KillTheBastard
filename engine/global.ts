@@ -55,6 +55,17 @@ module Global{
     }
 
     /*    --------------------------------------------------- *\
+            [function] getRandom(min, max)
+    
+            * Retourne un nombre random entre min & max *
+    
+            Return: number
+    \*    --------------------------------------------------- */
+    export function getRandom(min : number, max : number):number{
+        return Math.random() * (max - min) + min;
+    }
+
+    /*    --------------------------------------------------- *\
             [class] XHR()
     
             * Crée une request XHR *

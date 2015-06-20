@@ -15,6 +15,7 @@
 /// <reference path="render.ts" />
 /// <reference path="grid.ts" />
 /// <reference path="interface.ts" />
+/// <reference path="sounds.ts" />
 
 
 /*	--------------------------------------------------- *\
@@ -52,10 +53,16 @@ var mainCanvas = new Render.Layer();
 var debugCanvas = new Render.Layer();
 var interfaceCanvas = new Render.Layer();
 
+Render.add("interface/img/snow_test.png");
+Sounds.add("sounds/background/theme.mp3");
 
 Render.download();
-var dl = Render.ready(function() {
+Sounds.download();
 
-    console.log("OK");
+Render.ready(() => {
 
+    Sounds.ready(() => {
+        console.log("WAT");
+        var mySound = new Sounds.Sound("sounds/background/theme.mp3");
+    });
 });
