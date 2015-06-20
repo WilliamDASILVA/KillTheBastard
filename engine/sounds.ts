@@ -4,7 +4,7 @@
 module Sounds{
 
 	var elementsToDownload = [];
-	var functionsToCallWhenDownloadReady = [];
+	var functionToCallWhenDownloadReady = null;
 	var preloadElement = document.createElement("audio");
 	document.body.appendChild(preloadElement);
 
@@ -51,11 +51,9 @@ module Sounds{
 							}
 						}
 
-						console.log(elementsDownloaded, elementsToDownload.length);
 						if(elementsDownloaded == elementsToDownload.length){
-							for (var z = functionsToCallWhenDownloadReady.length - 1; z >= 0; z--) {
-								functionsToCallWhenDownloadReady[z]();
-								
+							if(functionToCallWhenDownloadReady){
+								functionToCallWhenDownloadReady();
 							}
 						}
 					});
@@ -73,7 +71,7 @@ module Sounds{
 			Return: nil
 	\*	--------------------------------------------------- */
 	export function ready(functionToCall : any){
-		functionsToCallWhenDownloadReady.push(functionToCall);
+		functionToCallWhenDownloadReady = functionToCall;
 	}
 
 	/*	--------------------------------------------------- *\
@@ -86,6 +84,11 @@ module Sounds{
 		
 		element: any;
 		path: string;
+		duration: number;
+		currentTime: number;
+		volume: number;
+		muted: boolean;
+		muteTemp: number;
 
 		/*	--------------------------------------------------- *\
 				[function] constructor()
@@ -97,8 +100,13 @@ module Sounds{
 		constructor(path : string){
 			this.element = document.createElement("audio");
 			document.body.appendChild(this.element);
-
 			this.setPath(path);
+
+			this.duration = this.element.duration;
+			this.volume = this.element.volume;
+			this.currentTime = 0;
+			this.muted = false;
+			this.muteTemp = 1;
 		}
 
 		/*	--------------------------------------------------- *\
@@ -125,6 +133,76 @@ module Sounds{
 		}
 
 		/*	--------------------------------------------------- *\
+				[function] getDUration()
+		
+				* Retourne la longeur de la bande don *
+		
+				Return: duration
+		\*	--------------------------------------------------- */
+		getDuration(){
+			return this.duration;
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] getVolume()
+		
+				* Retourne le volume du son *
+		
+				Return: volume
+		\*	--------------------------------------------------- */
+		getVolume(){
+			return this.volume;
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] setVolume(volume)
+		
+				* Set le volume du son *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		setVolume(volume : number){
+			if(volume >= 0){
+				this.volume = volume;
+				this.element.volume = this.getVolume();
+			}
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] setCurrentTime(time)
+		
+				* Set le currentTime du son en secondes *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		setCurrentTime(time : number){
+			this.currentTime = time;
+			this.element.currentTIme = this.getCurrentTime();
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] getCurrentTime()
+		
+				* Retourne le temps actuel en secondes *
+		
+				Return: currentTime
+		\*	--------------------------------------------------- */
+		getCurrentTime(){
+			return this.currentTime;
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] isMute()
+		
+				* Retourne si le son est mute ou pas *
+		
+				Return: true, false
+		\*	--------------------------------------------------- */
+		isMute(){
+			return this.muted;
+		}
+
+		/*	--------------------------------------------------- *\
 				[function] play()
 		
 				* Joue le son *
@@ -144,6 +222,45 @@ module Sounds{
 		\*	--------------------------------------------------- */
 		pause(){
 			this.element.pause();
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] stop()
+		
+				* Stoppe le son et le restart *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		stop(){
+			this.pause();
+			this.setCurrentTime(0);
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] mute()
+		
+				* Mute le son *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		mute(){
+			this.muteTemp = this.getVolume();
+			this.setVolume(0);
+			this.muted = true;
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] unmute()
+		
+				* Demute le son *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		unmute(){
+			if(this.muteTemp){
+				this.setVolume(this.muteTemp);
+			}
+			this.muted = false;
 		}
 	}
 }

@@ -57,12 +57,11 @@ Render.add("interface/img/snow_test.png");
 Sounds.add("sounds/background/theme.mp3");
 
 Render.download();
-Sounds.download();
 
 Render.ready(() => {
-
+    Sounds.download();
     Sounds.ready(() => {
-        console.log("WAT");
-        var mySound = new Sounds.Sound("sounds/background/theme.mp3");
+        
+        
     });
 });
