@@ -21,22 +21,9 @@
 /*	--------------------------------------------------- *\
 		Main file
 \*	--------------------------------------------------- */
-var canvas = document.getElementsByTagName("canvas")[0];
-if(canvas){
-	var context = canvas.getContext("2d");
-}
-else{
-	var canvas = document.createElement("canvas");
-	var context = canvas.getContext("2d");
-	document.appendChild(canvas);	
-}
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-
-var sX = canvas.width,
-    sY = canvas.height,
-    ratio = canvas.width/canvas.height;
+var sX = window.innerWidth,
+    sY = window.innerHeight;
+var ratio = sX/sY;
 
 /*    --------------------------------------------------- *\
         Global vars
@@ -50,10 +37,10 @@ cam.setPosition(sX / 2, sY / 2);
         Game
 \*    --------------------------------------------------- */
 var mainCanvas = new Render.Layer();
-var debugCanvas = new Render.Layer();
 var interfaceCanvas = new Render.Layer();
 
 Render.add("interface/img/snow_test.png");
+Render.add("images/background1.png");
 Sounds.add("sounds/background/theme.mp3");
 
 Render.download();
@@ -61,7 +48,18 @@ Render.download();
 Render.ready(() => {
     Sounds.download();
     Sounds.ready(() => {
-        
-        
+        var myMusic = new Sounds.Sound("sounds/background/theme.mp3");
+        myMusic.play();
+
+        var background = new Render.Texture("images/background1.png");
+        var snow = new Render.Drawable(background);
+        snow.setSmooth(false);
+        snow.setPosition(0, 0);
+        snow.setSize(sX, sY);
+
+
+
+        mainCanvas.set(snow);
+        Render.setCamera(cam);
     });
 });
