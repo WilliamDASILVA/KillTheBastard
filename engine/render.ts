@@ -22,6 +22,7 @@ module Render{
 		canvasElement: any;
 		context: any;
 		elements: any;
+		smooth: boolean;
 
     	/*	--------------------------------------------------- *\
     			[function] constructor()
@@ -42,6 +43,8 @@ module Render{
 			document.body.appendChild(this.canvasElement);
 
 			this.render();
+
+			this.smooth = true;
 
 			layers.push(this);
     	}
@@ -110,6 +113,28 @@ module Render{
     	\*	--------------------------------------------------- */
     	getElements(){
 			return this.elements;
+    	}
+
+    	/*	--------------------------------------------------- *\
+    			[function] setSmooth(value)
+    	
+    			* Set toute le canvas en smooth ou pixelated *
+    	
+    			Return: nil
+    	\*	--------------------------------------------------- */
+    	setSmooth(value : boolean){
+			this.smooth = value;
+    	}
+
+    	/*	--------------------------------------------------- *\
+    			[function] isSmooth()
+    	
+    			* Retourne si le canvas est smooth ou pixelated *
+    	
+    			Return: true, false
+    	\*	--------------------------------------------------- */
+    	isSmooth(){
+			return this.smooth;
     	}
     }
 
@@ -1322,6 +1347,14 @@ module Render{
 		var canvas = layer.getCanvas();
 		var context = layer.getContext();
 		var elements = layer.getElements();
+
+		// Smooth
+		if(!layer.isSmooth()){
+			context.mozImageSmoothingEnabled = false;
+			context.webkitImageSmoothingEnabled = false;
+			context.msImageSmoothingEnabled = false;
+			context.imageSmoothingEnabled = false;
+		}
 
         if(context && canvas){
     		context.clearRect(0,0, canvas.width, canvas.height);
