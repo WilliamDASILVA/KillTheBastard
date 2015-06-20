@@ -39,7 +39,7 @@ module Render{
 			this.canvasElement.width = window.innerWidth;
 			this.canvasElement.height = window.innerHeight;
 
-			document.getElementsByTagName("body")[0].appendChild(this.canvasElement);
+			document.body.appendChild(this.canvasElement);
 
 			this.render();
 
@@ -147,6 +147,9 @@ module Render{
 			if(this.data){
 				return this.data;
 			}
+			else{
+				return false;
+			}
 		}
 
 		/*	--------------------------------------------------- *\
@@ -198,6 +201,7 @@ module Render{
         rotationPoint: any;
         visible: boolean;
         layout: any;
+        smooth: boolean;
 
 		/*	--------------------------------------------------- *\
 				[function] constructor()
@@ -222,6 +226,7 @@ module Render{
             this.fixedToCenter = true;
             this.rotationPoint = { x: 0, y: 0 };
             this.visible = true;
+            this.smooth = true;
 		}
 
 		/*	--------------------------------------------------- *\
@@ -477,6 +482,27 @@ module Render{
 			this.layout = layout;
         }
 
+        /*	--------------------------------------------------- *\
+        		[function] setSmooth(boolean)
+        
+        		* Set si le drawable est smooth ou pixelated *
+        
+        		Return: nil
+        \*	--------------------------------------------------- */
+        setSmooth(value : boolean){
+			this.smooth = value;
+        }
+
+        /*	--------------------------------------------------- *\
+        		[function] isSmooth()
+        
+        		* Retourne si le drawable est smooth ou pas *
+        
+        		Return: true, false
+        \*	--------------------------------------------------- */
+        isSmooth(){
+			return this.smooth;
+        }
 
 	}
 
@@ -1422,6 +1448,14 @@ module Render{
 				// opacity
 				if(elementToDraw.getOpacity()){
 					context.globalAlpha = elementToDraw.getOpacity();
+				}
+
+				// smooth
+				if(!elementToDraw.isSmooth()){
+					context.mozImageSmoothingEnabled = false;
+					context.webkitImageSmoothingEnabled = false;
+					context.msImageSmoothingEnabled = false;
+					context.imageSmoothingEnabled = false;
 				}
 
 				// flipped
