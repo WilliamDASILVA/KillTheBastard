@@ -207,6 +207,24 @@ module UI{
         }
 
         /*    --------------------------------------------------- *\
+                [function] isVisibile(value)
+        
+                * Set si l'element est visible ou pas *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        isVisible(visible:any){
+            for (var i = this.renderElements.length - 1; i >= 0; i--) {
+                if(visible == true || visible == false){
+                    this.renderElements[i].visible = visible;
+                }
+                else{
+                    return this.renderElements[i].visible;
+                }
+            }
+        }
+
+        /*    --------------------------------------------------- *\
                 [function] click()
         
                 * Quand l'utilisateur clique sur la zone *

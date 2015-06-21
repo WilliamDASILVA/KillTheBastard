@@ -561,6 +561,7 @@ module Render{
 			super(texture);
 			this.sprite = true;
 			this.currentFrame = 0;
+			this.fps = 10;
             this.frameLine = parameters[7] || 0;
             this.position = { x: parameters[0], y: parameters[1] } || this.position;
             this.size = { width: parameters[2], height: parameters[3] } || this.size;
@@ -577,7 +578,7 @@ module Render{
 				if(cache.loop){
 					if (cache.loopFinished == false) {
 						cache.setCurrentFrame(currentFrame += 1);
-						if (currentFrame == cache.getFrameAmount()) {
+						if (currentFrame == cache.getFrameAmount() -1) {
 							cache.loopFinished = true;
 						}
 					}
@@ -589,7 +590,7 @@ module Render{
 					cache.setCurrentFrame(currentFrame += 1);
 				}
 
-			}, 80);
+			}, 1000 / this.fps);
 		}
 
 		/*	--------------------------------------------------- *\
@@ -644,7 +645,7 @@ module Render{
 				Return: nil
 		\*	--------------------------------------------------- */
 		setCurrentFrame(frame:number){
-			if(this.currentFrame >= this.frameAmount-1){
+			if(frame >= this.frameAmount){
 				this.currentFrame = 0;	
 			}
 			else{
@@ -703,7 +704,7 @@ module Render{
 				if(cache.loop){
 					if (cache.loopFinished == false) {
 						cache.setCurrentFrame(currentFrame += 1);
-						if (currentFrame == cache.getFrameAmount()) {
+						if (currentFrame == cache.getFrameAmount() - 1) {
 							cache.loopFinished = true;
 						}
 					}

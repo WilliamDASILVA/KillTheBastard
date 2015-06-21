@@ -208,6 +208,7 @@ module Input{
 
 					}
 				}
+				e.preventDefault();
 			}, false);
 		}
 
