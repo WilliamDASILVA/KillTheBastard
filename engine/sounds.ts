@@ -90,6 +90,9 @@ module Sounds{
 		muted: boolean;
 		muteTemp: number;
 
+		functionsToCallWhenEnd: any;
+		functionsToCallWhenPause: any;
+
 		/*	--------------------------------------------------- *\
 				[function] constructor()
 		
@@ -107,6 +110,15 @@ module Sounds{
 			this.currentTime = 0;
 			this.muted = false;
 			this.muteTemp = 1;
+
+			this.functionsToCallWhenEnd = [];
+			this.functionsToCallWhenPause = [];
+
+			this.element.addEventListener("ended", () => {
+				for (var i = this.functionsToCallWhenEnd.length - 1; i >= 0; i--) {
+					this.functionsToCallWhenEnd[i]();
+				}
+			});
 		}
 
 		/*	--------------------------------------------------- *\
@@ -222,6 +234,9 @@ module Sounds{
 		\*	--------------------------------------------------- */
 		pause(){
 			this.element.pause();
+			for (var i = this.functionsToCallWhenPause.length - 1; i >= 0; i--) {
+				this.functionsToCallWhenPause[i]();
+			}
 		}
 
 		/*	--------------------------------------------------- *\
@@ -261,6 +276,28 @@ module Sounds{
 				this.setVolume(this.muteTemp);
 			}
 			this.muted = false;
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] onEnd(functionToCall)
+		
+				* Quand le son est fini *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		onEnd(functionToCall : any){
+			this.functionsToCallWhenEnd.push(functionToCall);
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] onPause(functionToCall)
+		
+				* Quand le son est mis en pause *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		onPause(functionToCall :any){
+			this.functionsToCallWhenPause.push(functionToCall);
 		}
 	}
 }
