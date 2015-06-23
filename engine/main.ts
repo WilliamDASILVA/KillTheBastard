@@ -65,6 +65,7 @@ Render.ready(() => {
             Fade
     \*    --------------------------------------------------- */
     var isFade = true;
+    var isFadeFinish = null;
     var fadeTimer = null;
     var fadeInterval = null;
     var fadeElement = new Render.Draw.Rectangle(0, 0, sX, sY, "#000000");
@@ -81,37 +82,48 @@ Render.ready(() => {
     \*    --------------------------------------------------- */
     function fade(value : boolean, time : number, ...functionToCall : any[]){
         isFade = value;
-
-        clearInterval(fadeInterval);
-        fadeInterval = setInterval(() => {
-            var currentOpacity = fadeElement.getOpacity();
-            if(isFade){
-                if(currentOpacity < 1){
-                    fadeElement.setOpacity(currentOpacity + (50 / time));    
-                }
-            }
-            else{
-                if(currentOpacity > 0){
-                    fadeElement.setOpacity(currentOpacity - (50 / time));    
-                }
-            }
-        }, 50);
-
-        fadeTimer = setTimeout(() => {
-            clearInterval(fadeInterval);
+        if(!isFadeFinish){
             clearTimeout(fadeTimer);
+            clearInterval(fadeInterval);
+        }
 
-            if(isFade){
-                fadeElement.setOpacity(1);
-            }
-            else{
-                fadeElement.setOpacity(0);
-            }
+        isFadeFinish = false;
 
-            if(functionToCall[0]){
-                functionToCall[0]();
-            }
-        }, time + 1000);
+        if(!isFadeFinish){
+            clearInterval(fadeInterval);
+            fadeInterval = setInterval(() => {
+                var currentOpacity = fadeElement.getOpacity();
+                if(isFade){
+                    if(currentOpacity < 1){
+                        fadeElement.setOpacity(currentOpacity + (50 / time));    
+                    }
+                }
+                else{
+                    if(currentOpacity > 0){
+                        fadeElement.setOpacity(currentOpacity - (50 / time));    
+                    }
+                }
+            }, 50);
+
+            fadeTimer = setTimeout(() => {
+                clearInterval(fadeInterval);
+                clearTimeout(fadeTimer);
+                console.log("FADE END");
+                isFadeFinish = true;
+
+                if (isFade) {
+                    fadeElement.setOpacity(1);
+                }
+                else {
+                    fadeElement.setOpacity(0);
+                }
+
+                if (functionToCall[0]) {
+                    functionToCall[0]();
+                }
+            }, time + 1000);            
+        }
+
     }
 
     fade(false, 800);
