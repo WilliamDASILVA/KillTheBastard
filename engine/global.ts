@@ -66,6 +66,17 @@ module Global{
     }
 
     /*    --------------------------------------------------- *\
+            [function] getTrunc(x)
+    
+            * Retourne une valeur tronqué d'un nombre décimal *
+    
+            Return: number
+    \*    --------------------------------------------------- */
+    export function getTrunc(x : number):number {
+        return x < 0 ? Math.ceil(x) : Math.floor(x);
+    }
+
+    /*    --------------------------------------------------- *\
             [class] XHR()
     
             * Crée une request XHR *

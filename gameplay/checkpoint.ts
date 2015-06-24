@@ -1,5 +1,3 @@
-var checkpoints = [];
-
 /*	--------------------------------------------------- *\
 		[class] Checkpoint()
 
@@ -12,6 +10,7 @@ class Checkpoint{
 	drawable: any;
 	radius: number;
 	valid: boolean;
+	fadeTimer: any;
 
 	/*	--------------------------------------------------- *\
 			[function] constructor()
@@ -29,7 +28,26 @@ class Checkpoint{
 		this.drawable.setFreeze(true);
 		mainCanvas.set(this.drawable);
 
-		checkpoints.push(this);
+		this.fadeTimer = setInterval(() => {
+			var opacity = this.drawable.getOpacity();
+			this.drawable.setOpacity(opacity -= 0.01);
+			if(opacity <= 0){
+				this.drawable.setOpacity(0);
+				clearInterval(this.fadeTimer);
+			}
+		}, 80);
+
+	}
+
+	/*	--------------------------------------------------- *\
+			[function] delete()
+	
+			* Detruit l'element *
+	
+			Return: nil
+	\*	--------------------------------------------------- */
+	delete(){
+		mainCanvas.del(this.drawable);
 	}
 
 	/*	--------------------------------------------------- *\

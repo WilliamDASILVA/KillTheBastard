@@ -21,6 +21,7 @@ module UI{
         functionsToCallWhenOut: any;
         relativePosition: any;
         absolutePosition: any;
+        guiType: string;
 
         /*    --------------------------------------------------- *\
                 [function] constructor()
@@ -38,12 +39,13 @@ module UI{
             this.events = {};
             this.functionsToCall = {};
             this.functionsToCallWhenOut = {};
+            this.guiType = null;
 
             // Gestion de l'absolute & relative position
             this.relativePosition = { x: 0, y: 0 };
             this.absolutePosition = { x: 0, y: 0 };
 
-            var position = this.getPosition();
+            var position = this.getPosition(false);
             var size = this.getSize();
 
             // Events
@@ -63,7 +65,7 @@ module UI{
             // Hover
             this.functionsToCall.hover = [];
             this.events.hover = new Input.MouseMove((posX, posY) => {
-                if(posX >= this.getPosition().x && posY >= this.getPosition().y && posX <= this.getPosition().x + size.width && posY <= this.getPosition().y + size.height){
+                if(posX >= this.getPosition(false).x && posY >= this.getPosition(false).y && posX <= this.getPosition(false).x + size.width && posY <= this.getPosition(false).y + size.height){
                     for (var k = 0; k < this.functionsToCall.hover.length; ++k) {
                         this.functionsToCall.hover[k]();
                     }
@@ -95,19 +97,36 @@ module UI{
         }
 
         /*    --------------------------------------------------- *\
-                [function] setPosition(x, y, [optional : relative (true)/ absolute (false)])
+                [function] setPosition(x, y)
         
                 * Set la position de l'element *
         
                 Return: nil
         \*    --------------------------------------------------- */
-        setPosition(x: number, y: number, ...parameters : any[]){
-            if(parameters[0] == true){
+        setPosition(x: number, y: number){
+
+            // Check si l'element a un parent
+            if(this.getParent()){
+                // Il a un parent, on suppose que la position set est relative au parent
+                var parent = this.getParent();
+                var parentPosition = parent.getPosition(false);
+
+                this.relativePosition = { x: x, y: y };
+                this.absolutePosition = { x: parentPosition.x + x, y: parentPosition.y + y };
+            }
+            else{
+                // L'element n'a pas de parent, on suppose donc que sa position est relative à l'écran.
+                // Ce qui veut dire qu'il a la même relative/absolute position.
+                this.relativePosition = { x: x, y: y };
+                this.absolutePosition = { x: x, y: y };
+            }
+
+            /*if(parameters[0] == true){
                 this.relativePosition = { x: x, y: y };
             }
             else if(parameters[0] == false){
                 this.absolutePosition = { x: x, y: y };
-            }
+            }*/
             
 
             for (var i in this.events) {
@@ -117,19 +136,20 @@ module UI{
             }
 
             // move render elements
-            if(this.renderElements){
+            /*if(this.renderElements){
                 for (var k = 0; k < this.renderElements.length; ++k) {
+                    //var newPosition = this.getPosition();
                     this.renderElements[k].setPosition(x, y);
                 }
-            }
+            }*/
 
             // childrens
-            if(this.childrens){
+            /*if(this.childrens){
                 for (var z = this.childrens.length - 1; z >= 0; z--) {
                     var childPosition = this.childrens[z].getPosition();
                     this.childrens[z].setPosition(x + childPosition.x, y + childPosition.y, false);
                 }
-            }
+            }*/
         }
 
         /*    --------------------------------------------------- *\
@@ -139,20 +159,12 @@ module UI{
         
                 Return: position
         \*    --------------------------------------------------- */
-        getPosition(...parameter : any[]){
-            if(parameter[0] == true){
+        getPosition(...type : boolean[]){
+            if(type[0] == true){
                 return this.relativePosition;
             }
-            else if(parameter[0] == false){
+            else if(type[0] == false){
                 return this.absolutePosition;
-            }
-            else{
-                if(this.parent){
-                    return this.relativePosition;
-                }
-                else{
-                    return this.absolutePosition;
-                }
             }
         }
 
@@ -164,8 +176,7 @@ module UI{
                 Return: nil
         \*    --------------------------------------------------- */
         setSize(width : number, height : number){
-            this.size.width = width;
-            this.size.height = height;
+            this.size = {width : width, height : height};
 
             for (var i in this.events) {
                 this.events[i].width = width;
@@ -207,20 +218,34 @@ module UI{
         }
 
         /*    --------------------------------------------------- *\
-                [function] isVisibile(value)
+                [function] isVisibile()
         
-                * Set si l'element est visible ou pas *
+                * Check si l'element est visible ou pas *
         
                 Return: nil
         \*    --------------------------------------------------- */
-        isVisible(visible:any){
+        isVisible(){
+            var isVisible = false;
+
             for (var i = this.renderElements.length - 1; i >= 0; i--) {
-                if(visible == true || visible == false){
-                    this.renderElements[i].visible = visible;
+                if(isVisible != this.renderElements.visible){
+                    return !isVisible;
                 }
-                else{
-                    return this.renderElements[i].visible;
-                }
+            }
+            return isVisible;
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setVisible(value)
+        
+                * Set l'element et ses enfants visible ou non *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setVisible(value : boolean){
+            this.visible = value;
+            for (var i = this.renderElements.length - 1; i >= 0; i--) {
+                this.renderElements[i].visible = value;
             }
         }
 
@@ -275,12 +300,13 @@ module UI{
         \*    --------------------------------------------------- */
         constructor(x : number, y : number, width : number, height : number){
             super();
+            this.guiType = "window";
 
-            this.setPosition(x, y, false);
+            this.setPosition(x, y);
             this.setSize(width, height);
 
-            var position = this.getPosition();
-            this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "rgba(0,0,0,0.1)");
+            var position = this.getPosition(false);
+            this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "rgba(255,255,255,1)");
             this.renderElements[0].setDepth(10);
 
             for (var i = 0; i < this.renderElements.length; ++i) {
@@ -308,19 +334,17 @@ module UI{
         \*    --------------------------------------------------- */
         constructor(x: number, y: number, width: number, height: number, ...rest: any[]) {
             super();
+            this.guiType = "button";
 
             if (rest[0]) {
                 this.setParent(rest[0]);
-                this.setPosition(x, y, true);
             }
-            else {
-                this.setPosition(x, y, false);
-            }
+            this.setPosition(x, y);
 
             this.setSize(width, height);
             this.value = "";
 
-            var position = this.getPosition();
+            var position = this.getPosition(false);
             this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "rgba(255,255,255,1)");
             this.renderElements[1] = new Render.Draw.Text(position.x + width / 2, position.y + height / 2, this.value);
             this.renderElements[1].setAlign("center");
@@ -380,21 +404,18 @@ module UI{
         \*    --------------------------------------------------- */
         constructor(x :number, y : number, width : number, height : number, ...rest : any[]){
             super();
+            this.guiType = "field";
 
-            if(rest[0]){
+            if (rest[0]) {
                 this.setParent(rest[0]);
-                this.setPosition(x, y, true);
             }
-            else{
-                this.setPosition(x, y, false);
-            }
-
+            this.setPosition(x, y);
             this.setSize(width, height);
             this.value = "";
             this.placeholder = "";
 
             // shape
-            var position = this.getPosition();
+            var position = this.getPosition(false);
             this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "#FF0000");
             this.renderElements[1] = new Render.Draw.Text(position.x + width/2, position.y + height/2, this.placeholder);
             this.renderElements[1].setColor("#FFFFFF");
@@ -496,20 +517,19 @@ module UI{
         \*    --------------------------------------------------- */
         constructor(x : number, y : number, width : number, height : number, ...rest : any[]){
             super();
+            this.guiType = "checkbox";
 
-            if(rest[0]){
+            if (rest[0]) {
                 this.setParent(rest[0]);
-                this.setPosition(x, y, true);
             }
-            else{
-                this.setPosition(x, y, false);
-            }
+            this.setPosition(x, y);
+ 
             this.setSize(width, height);
 
             this.checked = false;
             this.functionsToCallWhenCheck = [];
 
-            var position = this.getPosition();
+            var position = this.getPosition(false);
             this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "rgba(0,0,0,0.1)");
             this.renderElements[0].setDepth(10);
             for (var i = 0; i < this.renderElements.length; ++i) {
@@ -586,18 +606,15 @@ module UI{
         \*    --------------------------------------------------- */
         constructor(x : number, y : number, text :string, ...rest : any[]){
             super();
+            this.guiType = "label";
 
-            if(rest[0]){
+            if (rest[0]) {
                 this.setParent(rest[0]);
-                this.setPosition(x, y, true);
             }
-            else{
-                this.setPosition(x, y, false);
-            }
-
+            this.setPosition(x, y);
             this.value = text;
 
-            var position = this.getPosition();
+            var position = this.getPosition(false);
             this.renderElements[0] = new Render.Draw.Text(position.x, position.y, this.value);
             this.renderElements[0].setDepth(10);
             for (var i = 0; i < this.renderElements.length; ++i) {

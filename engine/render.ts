@@ -213,7 +213,7 @@ module Render{
 	\*	--------------------------------------------------- */
 	export class Drawable{
 		texture : any;
-        position: { x: number; y: number;};
+        position: any;
 		size : any;
 		depth : number;
 		rotation : number;
@@ -229,23 +229,33 @@ module Render{
         smooth: boolean;
 
 		/*	--------------------------------------------------- *\
-				[function] constructor()
+				[function] constructor(texture, x, y, width, height)
 		
 				* Quand une texture est crée *
 		
 				Return: true, false
 		\*	--------------------------------------------------- */
-		constructor(texture:any){
+		constructor(texture:any, ...parameters  : any[]){
 			this.texture = texture;
 			if(texture == null){
-				this.size = {width: 0, height : 0};
+				this.setSize(0, 0);
 			}
 			else{
-				this.size = {width: texture.getData().width, height : texture.getData().height};
+				this.setSize(texture.getData().width, texture.getData().height);
 			}
+
+            this.setPosition(0, 0);
+			if(parameters[0] != null && parameters[1] != null){
+				this.setPosition(parameters[0], parameters[1]);
+			}
+
+			if(parameters[2] != null && parameters[3] != null){
+				this.setSize(parameters[2], parameters[3]);
+			}
+
+
 			this.depth = 0;
 			this.rotation = 0;
-            this.setPosition(0, 0);
             this.opacity = 1;
             this.type = "drawable";
             this.flipped = false;
@@ -264,7 +274,6 @@ module Render{
 		\*	--------------------------------------------------- */
 		setPosition(x:number, y : number){
 			this.position = {x : x, y : y};
-
 		}
 
 		/*	--------------------------------------------------- *\
@@ -482,19 +491,25 @@ module Render{
         }
 
         /*	--------------------------------------------------- *\
-        		[function] isVisible(boolean)
+        		[function] isVisible()
         
-        		* Set/ check si le drawable est visible *
+        		* Check si le drawable est visible *
         
         		Return: true, false
         \*	--------------------------------------------------- */
-        isVisible(visible:any){
-        	if(visible == true || visible == false){
-				this.visible = visible;
-        	}
-        	else{
-				return this.visible;
-        	}
+        isVisible(){
+			return this.visible;
+        }
+
+        /*	--------------------------------------------------- *\
+        		[function] setVisibl(value)
+        
+        		* Set ou non le drawable en visible *
+        
+        		Return: nil
+        \*	--------------------------------------------------- */
+        setVisible(value : boolean){
+			this.visible = value;
         }
 
         /*	--------------------------------------------------- *\
@@ -1417,6 +1432,9 @@ module Render{
                     			break;
 							case "draw":
 								var position = elementToDraw.getPosition();
+								if(!position){
+									position = elementToDraw.absolutePosition;
+								}
 								var size = elementToDraw.getSize();
 								drawElement(context, elementToDraw, position, size);
 								break;
@@ -1474,8 +1492,9 @@ module Render{
 	}
     
 	function drawElement(context, elementToDraw, position, size){
+
 		position.x = Math.floor(position.x);
-		position.y = Math.floor(position.y);
+		position.y = Math.floor(position.y);				
 
 		if (position.x > -size.width  && position.x <= sX + size.width && position.y > -size.height && position.y <= sY + size.height) {
 			if(elementToDraw.isVisible(null)){
