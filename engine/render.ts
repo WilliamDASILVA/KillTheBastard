@@ -805,6 +805,11 @@ module Render{
 			strokeColor: string;
 			shape: string;
 
+			shadowEnabled: boolean;
+			shadowColor: string;
+			shadowBlur: number;
+			shadowPosition: any;
+
 			/*	--------------------------------------------------- *\
 					[function] constructor()
 			
@@ -819,6 +824,11 @@ module Render{
 				this.shape = null;
 				this.strokeSize = 0;
 				this.color = "#000";
+
+				this.shadowEnabled = false;
+				this.shadowColor = "#000000";
+				this.shadowBlur = 0;
+				this.shadowPosition = { x: 0, y: 0 };
 			}
 
 			/*	--------------------------------------------------- *\
@@ -898,6 +908,93 @@ module Render{
 				return this.shape;
 			}
 
+			/*	--------------------------------------------------- *\
+					[function] setShadow(value)
+			
+					* Set un shadow ou non *
+			
+					Return: nil
+			\*	--------------------------------------------------- */
+			setShadow(value : boolean){
+				this.shadowEnabled = value;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] isShadowEnabled()
+			
+					* Retourne si le shadow est activé *
+			
+					Return: true, false
+			\*	--------------------------------------------------- */
+			isShadowEnabled(){
+				return this.shadowEnabled;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] setShadowColor(color)
+			
+					* Set la couleur de la shadow *
+			
+					Return: nil
+			\*	--------------------------------------------------- */
+			setShadowColor(color : string){
+				this.shadowColor = color;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] getShadowColor()
+			
+					* Retourne la couleur de la shadow *
+			
+					Return: color
+			\*	--------------------------------------------------- */
+			getShadowColor(){
+				return this.shadowColor;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] setShadowBlur(size)
+			
+					* Set la taille du blur du shadow *
+			
+					Return: nil
+			\*	--------------------------------------------------- */
+			setShadowBlur(size : number){
+				this.shadowBlur = size;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] getShadowBlur()
+			
+					* Retourne le blur du shadow *
+			
+					Return: nil
+			\*	--------------------------------------------------- */
+			getShadowBlur(){
+				return this.shadowBlur;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] setShadowPosition(x, y)
+			
+					* Set la position du shadow *
+			
+					Return: nil
+			\*	--------------------------------------------------- */
+			setShadowPosition(x : number, y : number){
+				this.shadowPosition = { x: x, y: y };
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] getShadowPosition()
+			
+					* Retourne la position du shadow *
+			
+					Return: position
+			\*	--------------------------------------------------- */
+			getShadowPosition(){
+				return this.shadowPosition;
+			}
 
 
 
@@ -1531,10 +1628,21 @@ module Render{
 
 				if(elementToDraw.getType() == "draw"){
 					context.fillStyle = elementToDraw.getColor();
+
+					// stroke
 					if (elementToDraw.getStrokeSize() != 0) {
 						context.lineWidth = elementToDraw.getStrokeSize();
 						context.strokeStyle = elementToDraw.getStrokeColor();
 					}
+
+					// shadow
+					if(elementToDraw.isShadowEnabled()){
+						context.shadowColor = elementToDraw.getShadowColor();
+						context.shadowBlur = elementToDraw.getShadowBlur();
+						context.shadowOffsetX = elementToDraw.getShadowPosition().x;
+						context.shadowOffsetY = elementToDraw.getShadowPosition().y;
+					}
+
 					switch (elementToDraw.getShape()) {
 						case "rectangle":
 							context.fillRect(Math.ceil(rotationPoint.x - (size.width / 2)), Math.ceil(rotationPoint.y - (size.height / 2)), Math.ceil(size.width), Math.ceil(size.height));
