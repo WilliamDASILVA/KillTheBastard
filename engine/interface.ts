@@ -48,10 +48,12 @@ module UI{
             var position = this.getPosition(false);
             var size = this.getSize();
 
+
             // Events
             // Click
             this.functionsToCall.click = [];
             this.functionsToCallWhenOut.click = [];
+            var cache = this;
             this.events.click = new Input.Click(position.x, position.y, size.width, size.height, () => {
                 for (var i = 0; i < this.functionsToCall.click.length; ++i) {
                     this.functionsToCall.click[i]();
@@ -65,9 +67,23 @@ module UI{
             // Hover
             this.functionsToCall.hover = [];
             this.events.hover = new Input.MouseMove((posX, posY) => {
-                if(posX >= this.getPosition(false).x && posY >= this.getPosition(false).y && posX <= this.getPosition(false).x + size.width && posY <= this.getPosition(false).y + size.height){
+                var position = cache.getPosition(false);
+                var size = cache.getSize();
+                if(posX >= position.x && posY >= position.y && posX <= position.x + size.width && posY <= position.y + size.height){
                     for (var k = 0; k < this.functionsToCall.hover.length; ++k) {
                         this.functionsToCall.hover[k]();
+                    }
+                }
+            });
+
+            // leave
+            this.functionsToCall.leave = [];
+            this.events.leave = new Input.MouseMove((posX, posY) => {
+                var position = cache.getPosition(false);
+                var size = cache.getSize();
+                if(!(posX >= position.x && posY >= position.y && posX <= position.x + size.width && posY <= position.y + size.height)){
+                    for (var k = 0; k < this.functionsToCall.leave.length; ++k) {
+                        this.functionsToCall.leave[k]();
                     }
                 }
             });
@@ -280,6 +296,17 @@ module UI{
         \*    --------------------------------------------------- */
         hover(functionToCall : any){
             this.functionsToCall.hover.push(functionToCall);
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] leave()
+        
+                * Quand l'utilisateur passe la souris autre que sur la zone *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        leave(functionToCall : any){
+            this.functionsToCall.leave.push(functionToCall);
         }
 
     }
