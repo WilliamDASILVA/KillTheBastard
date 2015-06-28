@@ -26,13 +26,14 @@ class Checkpoint{
 		this.drawable = new Render.Sprite(texture, this.position.x - radius, this.position.y - radius, radius * 2, radius * 2, 32, 32, 7, 0);
 		this.drawable.setUniqueLoop(true);
 		this.drawable.setFreeze(true);
+		this.drawable.setDepth(5);
 		mainCanvas.set(this.drawable);
 
 		this.fadeTimer = setInterval(() => {
 			var opacity = this.drawable.getOpacity();
 			this.drawable.setOpacity(opacity -= 0.01);
-			if(opacity <= 0){
-				this.drawable.setOpacity(0);
+			if(opacity <= 0.3){
+				this.drawable.setOpacity(0.3);
 				clearInterval(this.fadeTimer);
 			}
 		}, 80);

@@ -25,6 +25,7 @@ class Link{
 		this.element = new Render.Draw.Line(this.position.x, this.position.y, this.target.x, this.target.y);
 		this.element.setStrokeSize(10);
 		this.element.setStrokeColor("#FFFFFF");
+		this.element.setDepth(5);
 
 		this.fadeTimer = setInterval(() => {
 			var opacity = this.element.getOpacity();

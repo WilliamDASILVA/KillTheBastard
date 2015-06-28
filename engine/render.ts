@@ -77,6 +77,7 @@ module Render{
     	del(element : any){
     		for (var i = this.elements.length - 1; i >= 0; i--) {
     			if(this.elements[i] == element){
+					this.elements[i].setVisible(false);
 					delete this.elements[i];
     			}
     		}
@@ -1147,9 +1148,11 @@ module Render{
 			fontStyle: string;
 			baseLine: string;
 			align: string;
+			verticalAlign : string;
+			isMultiline: boolean;
 
 			/*	--------------------------------------------------- *\
-					[function] constructor([optional : position.x, position.y, texte])
+					[function] constructor([optional : position.x, position.y, texte, width, height])
 			
 					* Quand on ecrit du texte *
 			
@@ -1160,15 +1163,18 @@ module Render{
 				this.shape = "text";
 
 				this.value = "";
-				this.font = "Arial";
-				this.fontSize = 15;
+				this.setFont("Arial");
+				this.setFontSize(15);
 				this.fontStyle = "normal";
-				this.baseLine = "top";
-				this.align = "start";
-
+				this.setBaseline("top");
+				this.setAlign("start");
+				this.setVerticalAlign("top");
 
 				this.position.x = parameters[0] || this.position.x;
 				this.position.y = parameters[1] || this.position.y;
+				if(parameters[3] && parameters[4]){
+					this.setSize(parameters[3], parameters[4]);
+				}
 				this.value = parameters[2] || this.value;
 
 			}
@@ -1303,6 +1309,39 @@ module Render{
 			\*	--------------------------------------------------- */
 			getAlign(){
 				return this.align;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] setVerticalAlign(alignment)
+			
+					* Set l'alignement vertical *
+			
+					Return: nil
+			\*	--------------------------------------------------- */
+			setVerticalAlign(alignement : string){
+				this.verticalAlign = alignement;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] getVerticalAlign()
+			
+					* Retourne l'alignement vertical *
+			
+					Return: verticalAlign
+			\*	--------------------------------------------------- */
+			getVerticalAlign(){
+				return this.verticalAlign;
+			}
+
+			/*	--------------------------------------------------- *\
+					[function] setMultiline(boolean)
+			
+					* Set le multi line sur le texte *
+			
+					Return: nil
+			\*	--------------------------------------------------- */
+			setMultiline(value : boolean){
+				this.isMultiline = value;
 			}
 		}
 
@@ -1462,17 +1501,15 @@ module Render{
 		var context = layer.getContext();
 		var elements = layer.getElements();
 
-		// Smooth
-		if(!layer.isSmooth()){
-			context.mozImageSmoothingEnabled = false;
-			context.webkitImageSmoothingEnabled = false;
-			context.msImageSmoothingEnabled = false;
-			context.imageSmoothingEnabled = false;
-		}
 
         if(context && canvas){
     		context.clearRect(0,0, canvas.width, canvas.height);
 
+			// Smooth
+			if(!layer.isSmooth()){
+				context.mozImageSmoothingEnabled = false;
+				context.imageSmoothingEnabled = false;
+			}
 
     		// Sort elements by depth
     		elements.sort(function(a, b){
@@ -1493,96 +1530,98 @@ module Render{
     		// Draw every elements			
     		if(elements){
     			for(var i = 0; i < elements.length; i++){
+    				if(elements[i]){
+    					
+	    				// Check if it's a normal drawable or a grid
+	                    elementToDraw = elements[i];
 
-    				// Check if it's a normal drawable or a grid
-                    elementToDraw = elements[i];
+	                    if(elementToDraw.getType() != "drawable"){
+	                    	switch (elementToDraw.getType()) {
+	                    		case "grid":
+	                    			var grid = elementToDraw;
+		                            var tiles = grid.getTiles();
+									for (var k = tiles.length - 1; k >= 0; k--) {
 
-                    if(elementToDraw.getType() != "drawable"){
-                    	switch (elementToDraw.getType()) {
-                    		case "grid":
-                    			var grid = elementToDraw;
-	                            var tiles = grid.getTiles();
-								for (var k = tiles.length - 1; k >= 0; k--) {
+										//var pos = elementToDraw.getPosition();
+										var posInGrid = tiles[k].getPositionIntoGrid();
+										var pos = { x: posInGrid.x * grid.getTileSize(), y: posInGrid.y * grid.getTileSize() };
 
-									//var pos = elementToDraw.getPosition();
-									var posInGrid = tiles[k].getPositionIntoGrid();
-									var pos = { x: posInGrid.x * grid.getTileSize(), y: posInGrid.y * grid.getTileSize() };
+										elementToDraw = tiles[k].getAssignedDrawable();
+										var size = elementToDraw.getSize();
+										
 
-									elementToDraw = tiles[k].getAssignedDrawable();
-									var size = elementToDraw.getSize();
-									
-
-									// Gestion de la camera
-									var renderPos = { x: pos.x, y: pos.y };
-									if (renderCamera) {
-										var cPos = renderCamera.getPosition();
-										// isFixed
-										if (!elementToDraw.isFixed()) {
-											renderPos.x = pos.x + ((canvas.width / 2) - cPos.x);
-											renderPos.y = pos.y + ((canvas.height / 2) - cPos.y);
+										// Gestion de la camera
+										var renderPos = { x: pos.x, y: pos.y };
+										if (renderCamera) {
+											var cPos = renderCamera.getPosition();
+											// isFixed
+											if (!elementToDraw.isFixed()) {
+												renderPos.x = pos.x + ((canvas.width / 2) - cPos.x);
+												renderPos.y = pos.y + ((canvas.height / 2) - cPos.y);
+											}
 										}
+
+										drawElement(context, elementToDraw, renderPos, size);
 									}
 
-									drawElement(context, elementToDraw, renderPos, size);
-								}
+	                    			break;
+								case "draw":
+									var position = elementToDraw.getPosition();
+									if(!position){
+										position = elementToDraw.absolutePosition;
+									}
+									var size = elementToDraw.getSize();
+									drawElement(context, elementToDraw, position, size);
+									break;
+	                    		
+	                    		default:
+	                    			// Draw player
+		                            var assignedTexture = elementToDraw.getAssignedDrawable();
+		    	                    var test = { x: 0, y: 0 };
+		    	                    test.x = assignedTexture.getPosition().x;
+		    	                    test.y = assignedTexture.getPosition().y;
+		    						var size = assignedTexture.getSize();
 
-                    			break;
-							case "draw":
-								var position = elementToDraw.getPosition();
-								if(!position){
-									position = elementToDraw.absolutePosition;
-								}
-								var size = elementToDraw.getSize();
-								drawElement(context, elementToDraw, position, size);
-								break;
-                    		
-                    		default:
-                    			// Draw player
-	                            var assignedTexture = elementToDraw.getAssignedDrawable();
-	    	                    var test = { x: 0, y: 0 };
-	    	                    test.x = assignedTexture.getPosition().x;
-	    	                    test.y = assignedTexture.getPosition().y;
-	    						var size = assignedTexture.getSize();
+		    						// Gestion de la camera
+		    						var renderPos = {x : test.x, y : test.y};
+		    						if(renderCamera){
+		    							var cPos = renderCamera.getPosition();
+		    							// isFixed
+		    							if(!assignedTexture.isFixed()){
+		    								renderPos.x = test.x + ((canvas.width /2 ) - cPos.x);
+		    								renderPos.y = test.y + ((canvas.height /2 ) - cPos.y);
+		    							}
+		    						}
+		    	                	drawElement(context, assignedTexture, renderPos, size);
+	                    			break;
+	                    	}
 
-	    						// Gestion de la camera
-	    						var renderPos = {x : test.x, y : test.y};
-	    						if(renderCamera){
-	    							var cPos = renderCamera.getPosition();
-	    							// isFixed
-	    							if(!assignedTexture.isFixed()){
-	    								renderPos.x = test.x + ((canvas.width /2 ) - cPos.x);
-	    								renderPos.y = test.y + ((canvas.height /2 ) - cPos.y);
-	    							}
+	                    }
+	                    else{
+	                    	// Draw a normal drawable
+	                        var test = { x: 0, y: 0 };
+	                        test.x = elementToDraw.getPosition().x;
+	                        test.y = elementToDraw.getPosition().y;
+	    					var size = elementToDraw.getSize();
+
+
+
+	    					// Gestion de la camera
+	    					var renderPos = {x : test.x, y : test.y};
+	    					if(renderCamera){
+	    						var cPos = renderCamera.getPosition();
+	    						// isFixed
+	    						if(!elementToDraw.isFixed()){
+	    							renderPos.x = test.x + ((canvas.width /2 ) - cPos.x);
+	    							renderPos.y = test.y + ((canvas.height /2 ) - cPos.y);
 	    						}
-	    	                	drawElement(context, assignedTexture, renderPos, size);
-                    			break;
-                    	}
-
-                    }
-                    else{
-                    	// Draw a normal drawable
-                        var test = { x: 0, y: 0 };
-                        test.x = elementToDraw.getPosition().x;
-                        test.y = elementToDraw.getPosition().y;
-    					var size = elementToDraw.getSize();
+	    					}
 
 
-
-    					// Gestion de la camera
-    					var renderPos = {x : test.x, y : test.y};
-    					if(renderCamera){
-    						var cPos = renderCamera.getPosition();
-    						// isFixed
-    						if(!elementToDraw.isFixed()){
-    							renderPos.x = test.x + ((canvas.width /2 ) - cPos.x);
-    							renderPos.y = test.y + ((canvas.height /2 ) - cPos.y);
-    						}
-    					}
-
-
-                    	drawElement(context, elementToDraw, renderPos, size);
-                    			
-                    }
+	                    	drawElement(context, elementToDraw, renderPos, size);
+	                    			
+	                    }
+    				}
     			}
     		}
         }
@@ -1602,8 +1641,6 @@ module Render{
 				// smooth
 				if(!elementToDraw.isSmooth()){
 					context.mozImageSmoothingEnabled = false;
-					context.webkitImageSmoothingEnabled = false;
-					context.msImageSmoothingEnabled = false;
 					context.imageSmoothingEnabled = false;
 				}
 
@@ -1662,13 +1699,71 @@ module Render{
 							context.closePath();
 							break;
 						case "text":
-							context.textAlign = elementToDraw.getAlign();
 							context.font = elementToDraw.getFontStyle() + " " + elementToDraw.getFontSize() + "px " + elementToDraw.getFont();
 							context.textBaseline = elementToDraw.getBaseline();
 							if(elementToDraw.getStrokeSize() != 0){
 								context.strokeText(elementToDraw.getValue(), Math.ceil(rotationPoint.x - (size.width / 2)), Math.ceil(rotationPoint.y - (size.height / 2)));
 							}
-							context.fillText(elementToDraw.getValue(), Math.ceil(rotationPoint.x - (size.width / 2)), Math.ceil(rotationPoint.y - (size.height / 2)));
+
+							var myText = new String(elementToDraw.getValue());
+
+							var length = elementToDraw.getValue().length;
+							var lineHeight = elementToDraw.getFontSize();
+							var lineWidth = length * lineHeight;
+
+							var size = elementToDraw.getSize();
+							var numberLines = Math.ceil(lineWidth / size.width);
+							var numberOfCharacterInOneLine = Math.floor(size.width / lineHeight)*1.8;
+							var lines = [];
+							if(lineWidth > size.width){
+								numberLines = numberLines -1;
+							}
+
+							for (var i = 0; i < numberLines; i++) {
+								lines[i] = [];
+							};
+
+							var currentLetter = 0;
+							var currentLine = 0;
+							for (var letter = 0; letter < myText.length; letter++) {								
+								if(currentLetter < numberOfCharacterInOneLine){
+									lines[currentLine].push(myText[letter]);
+									currentLetter++;
+								}
+								else{
+									currentLetter = 0;									
+									currentLine++;
+									if(!lines[currentLine]){
+										lines[currentLine] = [];
+									}
+									lines[currentLine].push(myText[letter]);
+								}
+							};
+
+							var align = elementToDraw.getAlign();
+							var verticalAlign = elementToDraw.getVerticalAlign();
+							context.textAlign = align;
+
+							var linesHeight = lineHeight * lines.length;
+							var offsetPosition = {x : 0, y : 0};
+
+							for (var i = 0; i < lines.length; i++) {
+								var myString = "";
+								for (var k = 0; k < lines[i].length; k++) {
+									myString = myString + lines[i][k];
+								};
+
+								if(verticalAlign == "middle"){
+									offsetPosition.y = offsetPosition.y + lineHeight;									
+								}														
+
+								if(align == "center"){
+									offsetPosition.x = (size.width /2);
+								}
+
+								context.fillText(myString, Math.ceil(rotationPoint.x - (size.width / 2)) + offsetPosition.x, (Math.ceil(rotationPoint.y - (size.height / 2)) + (i * lineHeight) - (lineHeight/4)) + offsetPosition.y);
+							};
+
 							break;
 						case "point":
 							context.beginPath();

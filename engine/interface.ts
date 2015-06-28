@@ -252,6 +252,38 @@ module UI{
         }
 
         /*    --------------------------------------------------- *\
+                [function] setDepth(depth)
+        
+                * Set la profondeur de l'element *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setDepth(depth : number){
+            for (var i = 0; i < this.getElements().length; i++) {
+                this.getElements()[i].setDepth(depth + i);
+            };
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setOpacity(opacity)
+        
+                * Set l'opacité de l'element *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setOpacity(opacity : number){
+            for (var i = 0; i < this.getElements().length; i++) {
+                this.getElements()[i].setOpacity(opacity);
+            };
+
+            // set also for the parents
+            var childrens = this.getChildrens();
+            for (var i = 0; i < childrens.length; i++) {                
+                childrens[i].setOpacity(opacity);
+            }
+        }
+
+        /*    --------------------------------------------------- *\
                 [function] setVisible(value)
         
                 * Set l'element et ses enfants visible ou non *
@@ -260,8 +292,14 @@ module UI{
         \*    --------------------------------------------------- */
         setVisible(value : boolean){
             this.visible = value;
-            for (var i = this.renderElements.length - 1; i >= 0; i--) {
-                this.renderElements[i].visible = value;
+            for (var i = 0; i < this.getElements().length; i++) {
+                this.getElements()[i].setVisible(value);
+            }
+
+            // set also for the parents
+            var childrens = this.getChildrens();
+            for (var i = 0; i < childrens.length; i++) {                
+                childrens[i].setVisible(value);
             }
         }
 
@@ -334,7 +372,6 @@ module UI{
 
             var position = this.getPosition(false);
             this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "rgba(255,255,255,1)");
-            this.renderElements[0].setDepth(10);
 
             for (var i = 0; i < this.renderElements.length; ++i) {
                 interfaceCanvas.set(this.renderElements[i]);
@@ -373,10 +410,15 @@ module UI{
 
             var position = this.getPosition(false);
             this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "rgba(255,255,255,1)");
-            this.renderElements[1] = new Render.Draw.Text(position.x + width / 2, position.y + height / 2, this.value);
+            this.renderElements[0].setShadow(true);
+            this.renderElements[0].setShadowColor("rgba(0,0,0,0.3)");
+            this.renderElements[0].setShadowBlur(10);
+            this.renderElements[0].setDepth(1);
+            this.renderElements[1] = new Render.Draw.Text(position.x, position.y, this.value, width, height);
             this.renderElements[1].setAlign("center");
-            this.renderElements[1].setBaseline("middle");
+            this.renderElements[1].setVerticalAlign("middle");
             this.renderElements[1].setFontStyle("bold");
+            this.renderElements[1].setDepth(2);
 
             for (var i = 0; i < this.renderElements.length; ++i) {
                 interfaceCanvas.set(this.renderElements[i]);
@@ -405,6 +447,17 @@ module UI{
         \*    --------------------------------------------------- */
         getValue(){
             return this.value;
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setBackgroundColor(color)
+        
+                * Set la couleur de l'arrière plan *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setBackgroundColor(color : string){
+            this.renderElements[0].setColor(color);
         }
 
     }
@@ -631,19 +684,22 @@ module UI{
         
                 Return: nil
         \*    --------------------------------------------------- */
-        constructor(x : number, y : number, text :string, ...rest : any[]){
+        constructor(x : number, y : number, width : number, height : number, text :string, ...rest : any[]){
             super();
             this.guiType = "label";
 
             if (rest[0]) {
                 this.setParent(rest[0]);
             }
+
+            this.setSize(width, height);
             this.setPosition(x, y);
             this.value = text;
 
             var position = this.getPosition(false);
-            this.renderElements[0] = new Render.Draw.Text(position.x, position.y, this.value);
+            this.renderElements[0] = new Render.Draw.Text(position.x, position.y, this.value, width, height);
             this.renderElements[0].setDepth(10);
+            this.renderElements[0].setMultiline(true);
             for (var i = 0; i < this.renderElements.length; ++i) {
                 interfaceCanvas.set(this.renderElements[i]);
             }
@@ -671,6 +727,72 @@ module UI{
         getValue():string{
             return this.value;
         }
+
+        /*    --------------------------------------------------- *\
+                [function] setFontSize(size)
+        
+                * Set la taille de la font *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setFontSize(size : number){
+            for (var i = this.renderElements.length - 1; i >= 0; i--) {
+                this.renderElements[i].setFontSize(size);
+            }
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setFontStyle(style)
+        
+                * Set le style de la font *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setFontStyle(style : string){
+            for (var i = this.renderElements.length - 1; i >= 0; i--) {
+                this.renderElements[i].setFontStyle(style);
+            }
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setFont(fontName)
+        
+                * Set la font du text *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setFont(fontName : string){
+            for (var i = this.renderElements.length - 1; i >= 0; i--) {
+                this.renderElements[i].setFont(fontName);
+            }
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setBaseline(baseline)
+        
+                * Set la baseline du texte *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setBaseline(baseline : string){
+            for (var i = this.renderElements.length - 1; i >= 0; i--) {
+                this.renderElements[i].setBaseline(baseline);
+            }
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setAlign(alignment)
+        
+                * Set l'alignement du texte *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setAlign(alignment : string){
+            for (var i = this.renderElements.length - 1; i >= 0; i--) {
+                this.renderElements[i].setAlign(alignment);
+            }
+        }
+
     }
 
 
