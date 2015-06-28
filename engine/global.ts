@@ -77,6 +77,22 @@ module Global{
     }
 
     /*    --------------------------------------------------- *\
+            [function] isAndroid()
+    
+            * Check si on tourne sous Android ou non *
+    
+            Return: true, false
+    \*    --------------------------------------------------- */
+    export function isAndroid(){
+        if(navigator.userAgent.match(new RegExp("(Android|android)+", "g"))){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    /*    --------------------------------------------------- *\
             [class] XHR()
     
             * Crée une request XHR *
@@ -85,7 +101,8 @@ module Global{
     export class XHR{
 
         request: any;
-        functionToCallWhenReady: any;
+        functionsToCallWhenReady: any;
+        functionsToCallWhenLoaded: any;
 
         /*    --------------------------------------------------- *\
                 [function] constructor()
@@ -94,8 +111,9 @@ module Global{
         
                 Return: nil
         \*    --------------------------------------------------- */
-        constructor(target: string){
-            console.log(target);
+        constructor(target: string, ...parameters : any[]){
+            this.functionsToCallWhenReady = [];
+            this.functionsToCallWhenLoaded = [];
 
             try{
                 this.request = new XMLHttpRequest();
@@ -113,10 +131,25 @@ module Global{
             }
 
             this.request.open("GET", target, true);
+
+            if(parameters[0]){
+                this.request.responseType = parameters[0];
+            }
+
             this.request.send(null);
             this.request.addEventListener("readystatechange", () => {
-                if(this.functionToCallWhenReady){
-                    this.functionToCallWhenReady(this.request);
+                if(this.functionsToCallWhenReady){
+                    for (var i = 0; i < this.functionsToCallWhenReady.length; i++) {
+                        this.functionsToCallWhenReady[i](this.request);
+                    }
+                }
+            });
+
+            this.request.addEventListener("load", () => {
+                if(this.functionsToCallWhenLoaded){
+                    for (var i = 0; i < this.functionsToCallWhenLoaded.length; i++) {
+                        this.functionsToCallWhenLoaded[i](this.request);
+                    }
                 }
             });
 
@@ -131,7 +164,18 @@ module Global{
                 Return: nil
         \*    --------------------------------------------------- */
         ready(functionToCall : any){
-            this.functionToCallWhenReady = functionToCall;
+            this.functionsToCallWhenReady.push(functionToCall);
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] load()
+        
+                * Quand la request est chargé *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        load(functionToCall :any){
+            this.functionsToCallWhenLoaded.push(functionToCall);
         }
     }
 }

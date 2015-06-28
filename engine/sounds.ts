@@ -5,74 +5,7 @@ module Sounds{
 
 	var elementsToDownload = [];
 	var functionToCallWhenDownloadReady = null;
-	var preloadElement = document.createElement("audio");
-	document.body.appendChild(preloadElement);
-
-	/*	--------------------------------------------------- *\
-			[function] add(path)
-	
-			* Ajoute un son a télécharger *
-	
-			Return: nil
-	\*	--------------------------------------------------- */
-	export function add(path : string){
-		var element = {
-			state: "pending",
-			path: path
-		};
-		elementsToDownload.push(element);
-	}
-
-	/*	--------------------------------------------------- *\
-			[function] download()
-	
-			* Télécharge tous les sons *
-	
-			Return: nil
-	\*	--------------------------------------------------- */
-	export function download(){
-		var downloadComplete = false;
-		var elementsDownloaded = 0;
-
-		for (var i = elementsToDownload.length - 1; i >= 0; i--) {
-			if(elementsToDownload[i].state == "pending"){
-				var theAudio = preloadElement;
-				if(theAudio){
-					theAudio.src = "./" + elementsToDownload[i].path;
-					elementsToDownload[i].state = "downloading";
-					
-					var temp = elementsToDownload[i];
-					theAudio.addEventListener("canplaythrough", () => {
-						temp.state = "downloaded";
-
-						for (var k = elementsToDownload.length - 1; k >= 0; k--) {
-							if(elementsToDownload[k].state == "downloaded"){
-								elementsDownloaded++;
-							}
-						}
-
-						if(elementsDownloaded == elementsToDownload.length){
-							if(functionToCallWhenDownloadReady){
-								functionToCallWhenDownloadReady();
-							}
-						}
-					});
-					
-				}
-			}
-		}
-	}
-
-	/*	--------------------------------------------------- *\
-			[function] ready(functionToCall)
-	
-			* Appelle cette fonction quand le téléchargement est fini *
-	
-			Return: nil
-	\*	--------------------------------------------------- */
-	export function ready(functionToCall : any){
-		functionToCallWhenDownloadReady = functionToCall;
-	}
+	//var Media = Media || null;
 
 	/*	--------------------------------------------------- *\
 			[class] Sound()
@@ -89,9 +22,12 @@ module Sounds{
 		volume: number;
 		muted: boolean;
 		muteTemp: number;
+		request: any;
+		source: any;
 
 		functionsToCallWhenEnd: any;
 		functionsToCallWhenPause: any;
+		functionToCallWhenReady: any;
 
 		/*	--------------------------------------------------- *\
 				[function] constructor()
@@ -101,24 +37,32 @@ module Sounds{
 				Return: nil
 		\*	--------------------------------------------------- */
 		constructor(path : string){
-			this.element = document.createElement("audio");
-			document.body.appendChild(this.element);
-			this.setPath(path);
+			this.functionsToCallWhenEnd = [];
+			this.functionsToCallWhenPause = [];
+			this.functionToCallWhenReady = null;
+
+			this.element = null;
+
+			if(Global.isAndroid()){
+				this.element = new Media("/android_asset/www/" + path);			
+			}
+			else{
+				this.element = new Audio(path);
+				this.element.addEventListener("canplaythrough", () => {
+					if(this.functionToCallWhenReady){
+						this.functionToCallWhenReady();
+					}
+				});
+			}
+
+			this.path = path;
 
 			this.duration = this.element.duration;
-			this.volume = this.element.volume;
+			this.volume = this.element.volume || 1;
 			this.currentTime = 0;
 			this.muted = false;
 			this.muteTemp = 1;
 
-			this.functionsToCallWhenEnd = [];
-			this.functionsToCallWhenPause = [];
-
-			this.element.addEventListener("ended", () => {
-				for (var i = this.functionsToCallWhenEnd.length - 1; i >= 0; i--) {
-					this.functionsToCallWhenEnd[i]();
-				}
-			});
 		}
 
 		/*	--------------------------------------------------- *\
@@ -176,7 +120,12 @@ module Sounds{
 		setVolume(volume : number){
 			if(volume >= 0){
 				this.volume = volume;
-				this.element.volume = this.getVolume();
+				if(Media != undefined && Media.prototype.setVolume){
+					this.element.setVolume(volume);
+				}
+				else{
+					this.element.volume = volume;
+				}
 			}
 		}
 
@@ -189,7 +138,12 @@ module Sounds{
 		\*	--------------------------------------------------- */
 		setCurrentTime(time : number){
 			this.currentTime = time;
-			this.element.currentTIme = this.getCurrentTime();
+			if(Media != undefined){
+				this.element.seekTo(time);
+			}
+			else{
+				this.element.currentTime = time;
+			}
 		}
 
 		/*	--------------------------------------------------- *\
@@ -222,7 +176,9 @@ module Sounds{
 				Return: nil
 		\*	--------------------------------------------------- */
 		play(){
-			this.element.play();
+			if(this.element){
+				this.element.play();				
+			}
 		}
 
 		/*	--------------------------------------------------- *\
@@ -249,6 +205,9 @@ module Sounds{
 		stop(){
 			this.pause();
 			this.setCurrentTime(0);
+			if(this.element.stop()){
+				this.element.stop();
+			}
 		}
 
 		/*	--------------------------------------------------- *\
@@ -298,6 +257,17 @@ module Sounds{
 		\*	--------------------------------------------------- */
 		onPause(functionToCall :any){
 			this.functionsToCallWhenPause.push(functionToCall);
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] ready(functionToCall)
+		
+				* Quand le son est pret a être joué *
+		
+				Return: nil
+		\*	--------------------------------------------------- */
+		ready(functionToCall : any){
+			this.functionToCallWhenReady = functionToCall;
 		}
 	}
 }
