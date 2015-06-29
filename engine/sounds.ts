@@ -5,7 +5,19 @@ module Sounds{
 
 	var elementsToDownload = [];
 	var functionToCallWhenDownloadReady = null;
-	//var Media = Media || null;
+	var Media = Media || null;
+	var soundEnabled = true;
+
+	/*	--------------------------------------------------- *\
+			[function] setEnabled(value)
+	
+			* Set si le son doit être activé ou non *
+	
+			Return: nil
+	\*	--------------------------------------------------- */
+	export function setEnabled(value : boolean){
+		soundEnabled = value;
+	}
 
 	/*	--------------------------------------------------- *\
 			[class] Sound()
@@ -177,7 +189,9 @@ module Sounds{
 		\*	--------------------------------------------------- */
 		play(){
 			if(this.element){
-				this.element.play();				
+				if(soundEnabled){
+					this.element.play();				
+				}
 			}
 		}
 
@@ -205,8 +219,8 @@ module Sounds{
 		stop(){
 			this.pause();
 			this.setCurrentTime(0);
-			if(this.element.stop()){
-				this.element.stop();
+			if(Global.isAndroid()){
+				this.element.stop();				
 			}
 		}
 

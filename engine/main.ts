@@ -72,6 +72,8 @@ function startApp(){
     Render.add("images/torch.png");
     Render.add("images/checkpoint.png");
     Render.add("images/cursor.png");
+    Render.add("images/background3.png");
+    Render.add("images/logo2_white.png");
     Render.download();
 
     Render.ready(() => {
@@ -84,8 +86,7 @@ function startApp(){
         sounds['stab'] = new Sounds.Sound("sounds/effects/stab2.ogg");
         sounds['ftw'] = new Sounds.Sound("sounds/effects/forthewatch2.ogg");
         sounds['theme'].setVolume(0.3);
-        sounds['castamere'].setVolume(0.3);
-        sounds['theme'].play();        
+        sounds['castamere'].setVolume(0.3);  
                     
         
 
@@ -150,14 +151,27 @@ function startApp(){
 
         }
 
-        fade(false, 800);
-
-
+        setTimeout(() => {
+            fade(false, 800, () => {
+                setTimeout(() => {
+                    fade(true, 500, () => {
+                        hideInterface("splash");
+                        showInterface("sound");
+                        currentPage = "sound";
+                        fade(false, 800, () => {
+                            // wait for answer.
+                        });
+                    });
+                }, 2000);
+            });            
+        }, 1000)
         /*    --------------------------------------------------- *\
                 Textures
         \*    --------------------------------------------------- */
         var textures = [];
         textures['logo'] = new Render.Texture("images/logo_white.png");
+        textures['splashBackground'] = new Render.Texture("images/background3.png");
+        textures['logo2'] = new Render.Texture("images/logo2_white.png");
         textures['mute'] = new Render.Texture("images/mute.png");
         textures['torch'] = new Render.Texture("images/torch.png");
         textures['checkpoint'] = new Render.Texture("images/checkpoint.png");
@@ -174,7 +188,7 @@ function startApp(){
                 Interfaces
         \*    --------------------------------------------------- */
         var interfaces = [];
-        var currentPage = "menu";
+        var currentPage = "splash";
 
         /*    --------------------------------------------------- *\
                 [function] hideInterface(name)
@@ -247,7 +261,7 @@ function startApp(){
         interfaces['menu'].quitButton.setValue("QUIT");
         interfaces['menu'].quitButton.setDepth(2);
         interfaces['menu'].quitButton.setOpacity(0.4);
-        showInterface("menu");
+        hideInterface("menu");
 
         /*    --------------------------------------------------- *\
                 Menu :  Character mouvement
@@ -398,6 +412,7 @@ function startApp(){
             gameStarted = true;
             continueSpawn = true;
             checkpoints = [];
+            currentPage = "game";
 
 
             links = [];
@@ -508,7 +523,10 @@ function startApp(){
                     showInterface("menu");
                     hideInterface("game");
                     currentPage = "menu";
-                    fade(false, 800);        
+                    sounds['theme'].stop();
+                    fade(false, 800, () => {
+                        sounds['theme'].play();                        
+                    });        
                 });
             }
         });
@@ -517,6 +535,7 @@ function startApp(){
                 Game : Next level button
         \*    --------------------------------------------------- */
         interfaces['game'].next.click(() => {
+            console.log(currentPage);
             if(currentPage == "results"){
                 interfaces['game'].results.setOpacity(0);
                 fade(true, 800, () => {
@@ -679,6 +698,7 @@ function startApp(){
         \*    --------------------------------------------------- */
         var isPressing = false;
         var currentLink = null;
+        var hasPressedFirstTime = false;
         var touchEvent = new Input.Touch(0, 0, sX, sY);
         touchEvent.press((posX, posY) => {
             if(gameStarted){
@@ -689,6 +709,7 @@ function startApp(){
                         var distance = Global.getDistanceBetween2Points(position.x, position.y, posX, posY);
                         if(distance <= radius){
                             isPressing = true;
+                            hasPressedFirstTime = true;
                             checkpoints[i].setValid(true);
                             currentLink = new Link(position.x, position.y);
                             updatePoint();
@@ -701,7 +722,7 @@ function startApp(){
         });
 
         touchEvent.move((posX, posY) => {
-            if(gameStarted){
+            if(gameStarted && isPressing){
                 for (var i = checkpoints.length - 1; i >= 0; i--) {
                     if (checkpoints[i].valid == false) {
                         var position = checkpoints[i].getPosition();
@@ -725,32 +746,73 @@ function startApp(){
         });
 
         touchEvent.release(() => {
-            if(gameStarted){
+            if(gameStarted && hasPressedFirstTime){
                 isPressing = false;
                 clearInterval(timeUpdate);
 
-                checkIfWin(points, levels[currentLevel]);            
+                checkIfWin(points, levels[currentLevel]);
+                hasPressedFirstTime = false;        
             }
         });
 
 
         /*    --------------------------------------------------- *\
-                [function] haveWeWon()
-        
-                * Retourne vrai faux si le joueur a gagné la partie ou non *
-        
-                Return: true, false
+                Splashscreen
         \*    --------------------------------------------------- */
-        function haveWeWon(){
-            var oneMissing = false;
-            for (var i = checkpoints.length - 1; i >= 0; i--) {
-                if(!checkpoints[i].valid){
-                    oneMissing = true;
-                }
-            }
+        interfaces['splash'] = {}
+        interfaces['splash'].background = new Render.Drawable(textures['splashBackground'], 0,0, sX, sY);
+        interfaces['splash'].logo = new Render.Drawable(textures['logo2'], (sX/2) - ((sX / 2)/2), (sY/2)-((sX/2) / (247/106))/2, sX / 2, (sX/2) / (247/106));
+        interfaces['splash'].logo.setDepth(1);
+        interfaces['splash'].label = new Render.Draw.Text((sX/2) - ((sX / 2)/2), (sY/2)-((sX/2) / (247/106))/2 - 50, "A GAME BY", sX / 2, (sX/2) / (247/106));
+        interfaces['splash'].label.setDepth(2);
+        interfaces['splash'].label.setColor("#ffffff");
+        interfaces['splash'].label.setAlign("center");
+        interfaces['splash'].label.setFontSize(20);
 
-            return !oneMissing
-        }
+        /*    --------------------------------------------------- *\
+                Sound screen
+        \*    --------------------------------------------------- */
+        interfaces['sound'] = {}
+        interfaces['sound'].background = new Render.Drawable(textures['splashBackground'], 0,0, sX, sY);
+        interfaces['sound'].label = new Render.Draw.Text((sX/2) - ((sX / 2)/2), (sY/2) - 50, "DO YOU WANT TO ENABLE THE SOUND ?", sX / 2, (sX/2) / (247/106));
+        interfaces['sound'].label.setDepth(2);
+        interfaces['sound'].label.setColor("#ffffff");
+        interfaces['sound'].label.setAlign("center");
+        interfaces['sound'].label.setFontSize(18);
+        interfaces['sound'].no = new UI.Button((sX/2) - ((sX / 2)/2), (sY/2) + 17.5, 150, 35);
+        interfaces['sound'].no.setValue("No");
+        interfaces['sound'].yes = new UI.Button((sX/2) - ((sX / 2)/2) + sX /2 - 150, (sY/2)+ 17.5, 150, 35);
+        interfaces['sound'].yes.setValue("Yes");
+        hideInterface("sound");
+
+
+        /*    --------------------------------------------------- *\
+                Sound choice
+        \*    --------------------------------------------------- */
+        interfaces['sound'].yes.click(() => {
+            if(currentPage == "sound"){
+                Sounds.setEnabled(true);
+                fade(true, 500, () => {
+                    hideInterface("sound");
+                    showInterface("menu");
+                    currentPage = "menu";
+                    sounds['theme'].play();
+                    fade(false, 800);
+                });
+            }
+        });
+
+        interfaces['sound'].no.click(() => {
+            if(currentPage == "sound"){
+                Sounds.setEnabled(false);
+                fade(true, 500, () => {
+                    hideInterface("sound");
+                    showInterface("menu");
+                    currentPage = "menu";
+                    fade(false, 800);
+                });
+            }
+        });
 
 
         /*    --------------------------------------------------- *\
