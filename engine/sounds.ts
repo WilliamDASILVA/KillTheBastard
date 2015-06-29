@@ -5,8 +5,11 @@ module Sounds{
 
 	var elementsToDownload = [];
 	var functionToCallWhenDownloadReady = null;
-	var Media = Media || null;
 	var soundEnabled = true;
+
+	if(!Global.isAndroid()){
+		var Media = null;
+	}
 
 	/*	--------------------------------------------------- *\
 			[function] setEnabled(value)
@@ -36,6 +39,8 @@ module Sounds{
 		muteTemp: number;
 		request: any;
 		source: any;
+		isReady: boolean;
+		playing: boolean;
 
 		functionsToCallWhenEnd: any;
 		functionsToCallWhenPause: any;
@@ -54,13 +59,16 @@ module Sounds{
 			this.functionToCallWhenReady = null;
 
 			this.element = null;
-
+			this.isReady = false;
+			this.playing = false;
+			
 			if(Global.isAndroid()){
 				this.element = new Media("/android_asset/www/" + path);			
 			}
 			else{
 				this.element = new Audio(path);
 				this.element.addEventListener("canplaythrough", () => {
+					this.isReady = true;
 					if(this.functionToCallWhenReady){
 						this.functionToCallWhenReady();
 					}
@@ -190,7 +198,8 @@ module Sounds{
 		play(){
 			if(this.element){
 				if(soundEnabled){
-					this.element.play();				
+					this.element.play();
+					this.playing = true;	
 				}
 			}
 		}
@@ -204,8 +213,10 @@ module Sounds{
 		\*	--------------------------------------------------- */
 		pause(){
 			this.element.pause();
+			this.playing = false;
 			for (var i = this.functionsToCallWhenPause.length - 1; i >= 0; i--) {
 				this.functionsToCallWhenPause[i]();
+
 			}
 		}
 
@@ -222,6 +233,7 @@ module Sounds{
 			if(Global.isAndroid()){
 				this.element.stop();				
 			}
+			this.playing = true;
 		}
 
 		/*	--------------------------------------------------- *\
@@ -235,6 +247,17 @@ module Sounds{
 			this.muteTemp = this.getVolume();
 			this.setVolume(0);
 			this.muted = true;
+		}
+
+		/*	--------------------------------------------------- *\
+				[function] isPlaying()
+		
+				* Check si le son est entrant d'être joué ou non *
+		
+				Return: true, false
+		\*	--------------------------------------------------- */
+		isPlaying():boolean{
+			return this.playing;
 		}
 
 		/*	--------------------------------------------------- *\

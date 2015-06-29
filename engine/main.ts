@@ -46,6 +46,7 @@ new Fonts.FontFace("unfortunate", "fonts/unfortunate.ttf");
 var mainCanvas = new Render.Layer();
 mainCanvas.setSmooth(false);
 var interfaceCanvas = new Render.Layer();
+var currentPage = "splash";
 
 /*    --------------------------------------------------- *\
         [function] startTheApp()
@@ -61,6 +62,7 @@ function startApp(){
 
     Render.add("images/background1.png");
     Render.add("images/background2.png");
+    Render.add("images/background4.png");
     Render.add("images/characters/jon_snow/1.png");
     Render.add("images/characters/jon_snow/dead.png");
     Render.add("images/characters/olly/1.png");
@@ -81,13 +83,12 @@ function startApp(){
                 Sound
         \*    --------------------------------------------------- */
         var sounds = [];
-        sounds['theme'] = new Sounds.Sound("sounds/background/theme.amr");
+        sounds['theme'] = new Sounds.Sound("sounds/background/theme.ogg");
         sounds['castamere'] = new Sounds.Sound("sounds/background/castamere.ogg");
         sounds['stab'] = new Sounds.Sound("sounds/effects/stab2.ogg");
         sounds['ftw'] = new Sounds.Sound("sounds/effects/forthewatch2.ogg");
         sounds['theme'].setVolume(0.3);
-        sounds['castamere'].setVolume(0.3);  
-                    
+        sounds['castamere'].setVolume(0.3);
         
 
         /*    --------------------------------------------------- *\
@@ -164,13 +165,15 @@ function startApp(){
                     });
                 }, 2000);
             });            
-        }, 1000)
+        }, 1000);    
+
         /*    --------------------------------------------------- *\
                 Textures
         \*    --------------------------------------------------- */
         var textures = [];
         textures['logo'] = new Render.Texture("images/logo_white.png");
         textures['splashBackground'] = new Render.Texture("images/background3.png");
+        textures['creditsBackground'] = new Render.Texture("images/background4.png");
         textures['logo2'] = new Render.Texture("images/logo2_white.png");
         textures['mute'] = new Render.Texture("images/mute.png");
         textures['torch'] = new Render.Texture("images/torch.png");
@@ -188,7 +191,6 @@ function startApp(){
                 Interfaces
         \*    --------------------------------------------------- */
         var interfaces = [];
-        var currentPage = "splash";
 
         /*    --------------------------------------------------- *\
                 [function] hideInterface(name)
@@ -250,7 +252,7 @@ function startApp(){
         interfaces['menu'].playButton.setValue("PLAY");
         interfaces['menu'].playButton.setDepth(2);
         interfaces['menu'].scoreButton = new UI.Button((sX/2) - (sX/3.5)/2, interfaces['menu'].playButton.getPosition(false).y + 45, (sX/3.5), 35);
-        interfaces['menu'].scoreButton.setValue("SCOREBOARD");
+        interfaces['menu'].scoreButton.setValue("HIGHSCORE");
         interfaces['menu'].scoreButton.setDepth(2);
         interfaces['menu'].scoreButton.setOpacity(0.8);
         interfaces['menu'].creditsButton = new UI.Button((sX/2) - (sX/3.5)/2, interfaces['menu'].scoreButton.getPosition(false).y + 45, (sX/3.5), 35);
@@ -308,6 +310,18 @@ function startApp(){
             }
         });
 
+        interfaces['menu'].creditsButton.click(() => {
+            if(currentPage == "menu"){
+                fade(true, 800, () => {
+                    hideInterface("menu");
+                    showInterface("credits");
+                    fade(false, 800);
+
+                    currentPage = "credits";
+                });
+            }
+        });
+
 
         /*    --------------------------------------------------- *\
                 Interface :  Game
@@ -340,6 +354,12 @@ function startApp(){
         interfaces['game'].time.setColor("#ffffff");
         interfaces['game'].time.setFontSize(35);
         interfaces['game'].time.setVerticalAlign("middle");
+        interfaces['game'].level = new Render.Draw.Text(0, 0, "LEVEL: 0", sX - 300, 50);
+        interfaces['game'].level.setDepth(3);
+        interfaces['game'].level.setAlign("center");
+        interfaces['game'].level.setColor("#ffffff");
+        interfaces['game'].level.setFontSize(18);
+        interfaces['game'].level.setVerticalAlign("middle");
 
         interfaces['game'].results = new UI.Window(sX / 2 - (sX / 4), (sY / 2) - (sY / 4), sX / 2, sY / 2);
         interfaces['game'].results_title = new UI.Label(0, 30, sX / 2, 50, "You win", interfaces['game'].results);
@@ -374,13 +394,13 @@ function startApp(){
         var hasLose = null;
 
         var levels = [
-            {time : 20000, points : 45},
-            {time : 15000, points : 35},
-            {time : 10000, points : 25},
-            {time : 5000, points : 15}
+            {time : 20000, points : 35},
+            {time : 15000, points : 25},
+            {time : 10000, points : 15},
+            {time : 5000, points : 10}
         ];
 
-        console.log(levels[0]);
+        console.log(levels);
 
         /*    --------------------------------------------------- *\
                 [function] startGame()
@@ -408,6 +428,8 @@ function startApp(){
         function newGame(selectedLevel : number){
             var level = levels[selectedLevel];
             var time = level.time;
+
+            interfaces['game'].level.setValue("Level: " + selectedLevel);
 
             gameStarted = true;
             continueSpawn = true;
@@ -454,6 +476,7 @@ function startApp(){
         
                 Return: true, false
         \*    --------------------------------------------------- */
+        var gameFinished = false;
         function checkIfWin(points : number, level : any){
             interfaces['game'].time.setValue("00:00");
             interfaces['game'].points.setValue("POINTS: " + points);
@@ -465,32 +488,48 @@ function startApp(){
                 checkpoints[i].delete();
             };
 
-            interfaces['game'].results.setOpacity(1);
             interfaces['game'].results_score.setValue("Your points: " + points);
             interfaces['game'].results_points.setValue("Points to win: " + level.points);
             var theTime = getFormatedTime(level.time);
             interfaces['game'].results_duration.setValue("Level duration: " + theTime.seconds + ":" + theTime.ms);
-            currentPage = "results";
 
             if(points >= level.points){
                 hasLose = false;
                 interfaces['game'].results_title.setValue("You win");
-                console.log("YOU WIN");
 
                 sounds['stab'].play();
                 interfaces['game'].attacker.setFreeze(false);
                 interfaces['game'].attacker.playUniqueLoop();
                 setTimeout(() => {
                     interfaces['game'].jon.setCurrentFrame(1);
+                    sounds['ftw'].play();
+                    setTimeout(() => {
+                        setTimeout(() => {
+                            currentPage = "results";
+                            interfaces['game'].results.setOpacity(1);
+                        }, 1000);
+                    }, 800);
                 }, 1000);
 
+                if(levels[currentLevel + 1] === undefined){
+                    gameFinished = true;
+                    interfaces['game'].next.setValue("Save to highscore");
+                }
+                else{
+                    interfaces['game'].next.setValue("Next level");
+
+                }
                 currentLevel++;
             }
             else{
+                currentPage = "results";
+                interfaces['game'].results.setOpacity(1);
                 interfaces['game'].results_title.setValue("You lost");
                 interfaces['game'].next.setValue("Retry");
                 hasLose = true;
             }
+
+            gameStarted = false;
         }
 
         /*    --------------------------------------------------- *\
@@ -523,9 +562,11 @@ function startApp(){
                     showInterface("menu");
                     hideInterface("game");
                     currentPage = "menu";
-                    sounds['theme'].stop();
                     fade(false, 800, () => {
-                        sounds['theme'].play();                        
+                        if(!sounds['theme'].isPlaying()){
+                            sounds['theme'].play(); 
+                        }
+                                                   
                     });        
                 });
             }
@@ -535,14 +576,19 @@ function startApp(){
                 Game : Next level button
         \*    --------------------------------------------------- */
         interfaces['game'].next.click(() => {
-            console.log(currentPage);
+            console.log(currentPage, gameFinished);
             if(currentPage == "results"){
-                interfaces['game'].results.setOpacity(0);
-                fade(true, 800, () => {
-                    fade(false, 800, () => {
-                        newGame(currentLevel);                    
-                    })
-                })
+                if(gameFinished){
+                    console.log("LOAD THE HIGHSCORE");
+                }
+                else{
+                    interfaces['game'].results.setOpacity(0);
+                    fade(true, 800, () => {
+                        fade(false, 800, () => {
+                            newGame(currentLevel);                    
+                        })
+                    });                    
+                }
             }
         });
 
@@ -560,6 +606,7 @@ function startApp(){
                 interfaces['game'].scoreBackground.setVisible(true);
                 interfaces['game'].points.setVisible(true);
                 interfaces['game'].time.setVisible(true);
+                interfaces['game'].level.setVisible(true);
                 isHUDVisible = true;
             }
             else{
@@ -567,6 +614,7 @@ function startApp(){
                 interfaces['game'].scoreBackground.setVisible(false);
                 interfaces['game'].points.setVisible(false);
                 interfaces['game'].time.setVisible(false);
+                interfaces['game'].level.setVisible(false);
 
                 isHUDVisible = false;
             }
@@ -677,7 +725,76 @@ function startApp(){
         \*    --------------------------------------------------- */
         interfaces['credits'] = {};
         interfaces['credits'].background = new Render.Drawable(textures['creditsBackground'], 0, 0, sX, sY);
+        interfaces['credits'].background.setDepth(-1);
+        interfaces['credits'].label1   = new Render.Draw.Text((sX/2 - 200), 0.1*sY, "A GAME BY", 400, 50);
+        interfaces['credits'].label1.setColor("#FFFFFF");
+        interfaces['credits'].label1.setAlign("center");
+        interfaces['credits'].label2   = new Render.Draw.Text((sX/2 - 200), 0.18*sY, "WILLIAM DA SILVA", 400, 50);
+        interfaces['credits'].label2.setColor("#FFFFFF");
+        interfaces['credits'].label2.setAlign("center");
+        interfaces['credits'].label2.setFontSize(30);
+        interfaces['credits'].label3   = new Render.Draw.Text((sX/2 - 200), 0.25*sY, "www.williamdasilva.fr", 400, 50);
+        interfaces['credits'].label3.setColor("#FFFFFF");
+        interfaces['credits'].label3.setAlign("center");
+        interfaces['credits'].label3.setFontSize(20);
+        interfaces['credits'].label4   = new Render.Draw.Text((sX/2 - 200), 0.35*sY, "SOUND EFFECTS", 400, 50);
+        interfaces['credits'].label4.setColor("#FFFFFF");
+        interfaces['credits'].label4.setAlign("center");
+        interfaces['credits'].label4.setFontSize(30);
+        interfaces['credits'].label5   = new Render.Draw.Text((sX/2 - 200), 0.42*sY, "'For the watch' - Edited", 400, 50);
+        interfaces['credits'].label5.setColor("#FFFFFF");
+        interfaces['credits'].label5.setAlign("center");
+        interfaces['credits'].label5.setFontSize(18);
+        interfaces['credits'].label6   = new Render.Draw.Text((sX/2 - 200), 0.47*sY, "Home Box Office, 2015", 400, 50);
+        interfaces['credits'].label6.setColor("#FFFFFF");
+        interfaces['credits'].label6.setAlign("center");
+        interfaces['credits'].label6.setFontSize(13);
+        interfaces['credits'].label7   = new Render.Draw.Text((sX/2 - 200), 0.52*sY, "'Stab' - Edited", 400, 50);
+        interfaces['credits'].label7.setColor("#FFFFFF");
+        interfaces['credits'].label7.setAlign("center");
+        interfaces['credits'].label7.setFontSize(18);
+        interfaces['credits'].label8   = new Render.Draw.Text((sX/2 - 200), 0.57*sY, "Home Box Office, 2015", 400, 50);
+        interfaces['credits'].label8.setColor("#FFFFFF");
+        interfaces['credits'].label8.setAlign("center");
+        interfaces['credits'].label8.setFontSize(13);
+        interfaces['credits'].label9   = new Render.Draw.Text((sX/2 - 200), 0.63*sY, "SOUNDTRACK", 400, 50);
+        interfaces['credits'].label9.setColor("#FFFFFF");
+        interfaces['credits'].label9.setAlign("center");
+        interfaces['credits'].label9.setFontSize(30);
+        interfaces['credits'].label10   = new Render.Draw.Text((sX/2 - 200), 0.70*sY, "'Game of Thrones 8bit'", 400, 50);
+        interfaces['credits'].label10.setColor("#FFFFFF");
+        interfaces['credits'].label10.setAlign("center");
+        interfaces['credits'].label10.setFontSize(18);
+        interfaces['credits'].label11   = new Render.Draw.Text((sX/2 - 200), 0.75*sY, "FloatingPointMusic, 2012", 400, 50);
+        interfaces['credits'].label11.setColor("#FFFFFF");
+        interfaces['credits'].label11.setAlign("center");
+        interfaces['credits'].label11.setFontSize(13);
+        interfaces['credits'].label12   = new Render.Draw.Text((sX/2 - 200), 0.80*sY, "'Rains of Castamere 8bit'", 400, 50);
+        interfaces['credits'].label12.setColor("#FFFFFF");
+        interfaces['credits'].label12.setAlign("center");
+        interfaces['credits'].label12.setFontSize(18);
+        interfaces['credits'].label13   = new Render.Draw.Text((sX/2 - 200), 0.85*sY, "FloatingPointMusic, 2012", 400, 50);
+        interfaces['credits'].label13.setColor("#FFFFFF");
+        interfaces['credits'].label13.setAlign("center");
+        interfaces['credits'].label13.setFontSize(13);
+        interfaces['credits'].back = new UI.Button(sX - 160, sY - 45, 150, 35);
+        interfaces['credits'].back.setValue("Back to menu");
         hideInterface("credits");
+
+        /*    --------------------------------------------------- *\
+                Back button
+        \*    --------------------------------------------------- */
+        interfaces['credits'].back.click(() => {
+            if(currentPage == "credits"){
+                fade(true, 800, () => {
+                    currentPage = "menu";
+                    hideInterface("credits");
+                    showInterface("menu");
+                    sounds['theme'].play();
+                    fade(false, 800);
+                });
+            }
+        });
 
         
 
@@ -795,7 +912,7 @@ function startApp(){
                 fade(true, 500, () => {
                     hideInterface("sound");
                     showInterface("menu");
-                    currentPage = "menu";
+                    currentPage = "menu";                    
                     sounds['theme'].play();
                     fade(false, 800);
                 });
