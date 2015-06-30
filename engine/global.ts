@@ -130,10 +130,15 @@ module Global{
                 }
             }
 
-            this.request.open("GET", target, true);
-
+            var requestType = "GET";
             if(parameters[0]){
-                this.request.responseType = parameters[0];
+                requestType = parameters[0];
+            }
+
+            this.request.open(requestType, target, true);            
+
+            if(parameters[1]){
+                this.request.responseType = parameters[1];
             }
 
             this.request.send(null);

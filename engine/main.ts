@@ -37,6 +37,7 @@ var ratio = sX/sY;
 var world = new Scene();
 var cam = new Camera(world);
 cam.setPosition(sX / 2, sY / 2);
+var requestDomain = "local.dev/perso/williamdasilva/";
 
 new Fonts.FontFace("unfortunate", "fonts/unfortunate.ttf");
 
@@ -47,6 +48,9 @@ var mainCanvas = new Render.Layer();
 mainCanvas.setSmooth(false);
 var interfaceCanvas = new Render.Layer();
 var currentPage = "splash";
+var data = null;
+var temporarySave = [];
+
 
 /*    --------------------------------------------------- *\
         [function] startTheApp()
@@ -57,12 +61,17 @@ var currentPage = "splash";
 \*    --------------------------------------------------- */
 function startApp(){
 
+    var flags = [];
+    flags = ["fr", "usa", "it", "es", "de", "jp", "ru", "cn", "canada", "br", "be", "arg", "alg", "swz", "tk", "uk"];
 
-
+    for (var i = flags.length - 1; i >= 0; i--) {
+        Render.add("images/flags/" + flags[i] + ".png");
+    };
 
     Render.add("images/background1.png");
     Render.add("images/background2.png");
     Render.add("images/background4.png");
+    Render.add("images/background5.png");
     Render.add("images/characters/jon_snow/1.png");
     Render.add("images/characters/jon_snow/dead.png");
     Render.add("images/characters/olly/1.png");
@@ -174,6 +183,7 @@ function startApp(){
         textures['logo'] = new Render.Texture("images/logo_white.png");
         textures['splashBackground'] = new Render.Texture("images/background3.png");
         textures['creditsBackground'] = new Render.Texture("images/background4.png");
+        textures['scoreBackground'] = new Render.Texture("images/background5.png");
         textures['logo2'] = new Render.Texture("images/logo2_white.png");
         textures['mute'] = new Render.Texture("images/mute.png");
         textures['torch'] = new Render.Texture("images/torch.png");
@@ -186,6 +196,10 @@ function startApp(){
         textures['olly1'] = new Render.Texture("images/characters/olly/1.png");
         textures['olly2'] = new Render.Texture("images/characters/olly/attack.png");
         textures['sam'] = new Render.Texture("images/characters/sam/1.png");
+
+        for (var i = flags.length - 1; i >= 0; i--) {
+            textures['flag_' + flags[i]] = new Render.Texture("images/flags/" + flags[i] + ".png");
+        };
 
         /*    --------------------------------------------------- *\
                 Interfaces
@@ -322,6 +336,25 @@ function startApp(){
             }
         });
 
+        interfaces['menu'].quitButton.click(() => {
+            if(currentPage == "menu"){
+                navigator.app.exitApp();                                
+            }
+        });
+
+        interfaces['menu'].scoreButton.click(() => {
+            if(currentPage == "menu"){
+                fade(true, 800, () => {
+                    hideInterface("menu");
+                    showInterface("score");
+                    currentPage = "score";
+
+                    updateHighscore();
+                    fade(false, 800); 
+                });
+            }
+        });
+
 
         /*    --------------------------------------------------- *\
                 Interface :  Game
@@ -376,8 +409,7 @@ function startApp(){
         interfaces["game"].home.setValue("Go to menu");
         interfaces["game"].next = new UI.Button(sX / 2 - 110, sY / 2 - 17.5, 100, 35, interfaces['game'].results);
         interfaces["game"].next.setValue("Next level");
-        interfaces['game'].results.setOpacity(0);
-                
+        interfaces['game'].results.setOpacity(0);                
         hideInterface("game");
 
 
@@ -497,6 +529,9 @@ function startApp(){
                 hasLose = false;
                 interfaces['game'].results_title.setValue("You win");
 
+                temporarySave[currentLevel] = points;
+
+
                 sounds['stab'].play();
                 interfaces['game'].attacker.setFreeze(false);
                 interfaces['game'].attacker.playUniqueLoop();
@@ -579,7 +614,18 @@ function startApp(){
             console.log(currentPage, gameFinished);
             if(currentPage == "results"){
                 if(gameFinished){
-                    console.log("LOAD THE HIGHSCORE");
+                    fade(true, 800, () => {
+                        hideInterface("game");
+                        showInterface("score_save");
+                        currentPage = "scoreSave";
+
+                        if(localStorage.getItem("playername") != null){
+                            interfaces['score_save'].input.setValue(localStorage.getItem("playername"));
+                        }
+
+                        fade(false, 800, () => {
+                        });
+                    });
                 }
                 else{
                     interfaces['game'].results.setOpacity(0);
@@ -931,6 +977,273 @@ function startApp(){
             }
         });
 
+        /*    --------------------------------------------------- *\
+                Highscore
+        \*    --------------------------------------------------- */
+        var scorePage = 0;
+
+        interfaces['score'] = {}
+        interfaces['score'].background  = new Render.Drawable(textures['scoreBackground'], 0,0, sX, sY);
+        interfaces['score'].back = new UI.Button(10,sY - 45, 150, 35);
+        interfaces['score'].back.setValue("Back to menu");
+        interfaces['score'].back.setDepth(0);
+        interfaces['score'].previous = new UI.Button(150, 15, 80, 35);
+        interfaces['score'].previous.setValue("Level 0");
+        interfaces['score'].next = new UI.Button(sX - 150 - 20, 15, 80, 35);
+        interfaces['score'].next.setValue("Level 1");
+        interfaces['score'].title = new Render.Draw.Text(230, 0, "LEVEL " + scorePage, sX - 170 - 230, 80);
+        interfaces['score'].title.setColor("#FFFFFF");
+        interfaces['score'].title.setFontSize(20);
+        interfaces['score'].title.setAlign("center");
+        interfaces['score'].title.setVerticalAlign("middle");
+        interfaces['score'].title.setDepth(1);
+        interfaces['score'].pointsMin = new Render.Draw.Text(230, 25, "Minimum points: 0", sX - 170 - 230, 80);
+        interfaces['score'].pointsMin.setColor("#FFFFFF");
+        interfaces['score'].pointsMin.setFontSize(15);
+        interfaces['score'].pointsMin.setAlign("center");
+        interfaces['score'].pointsMin.setVerticalAlign("middle");
+        interfaces['score'].pointsMin.setDepth(1);
+        interfaces['score'].time = new Render.Draw.Text(230, 40, "Time: 00:00", sX - 170 - 230, 80);
+        interfaces['score'].time.setColor("#FFFFFF");
+        interfaces['score'].time.setFontSize(15);
+        interfaces['score'].time.setAlign("center");
+        interfaces['score'].time.setVerticalAlign("middle");
+        interfaces['score'].title.setDepth(1);
+
+        hideInterface("score");
+
+        /*    --------------------------------------------------- *\
+                Highscore : Back
+        \*    --------------------------------------------------- */
+        interfaces['score'].back.click(() => {
+            if(currentPage == "score"){
+                fade(true, 800, () => {
+                    hideInterface("score");
+                    showInterface("menu");
+                    currentPage = "menu";
+                    clearSpawnEntries();
+
+                    fade(false, 800, () => {
+                    });
+                });
+            }
+        });
+
+        /*    --------------------------------------------------- *\
+                Highscore: Previous
+        \*    --------------------------------------------------- */
+        interfaces['score'].previous.click(() => {
+            console.log(scorePage);
+            if(currentPage == "score" && scorePage > 0){
+                if(scorePage -1  >= 0){
+                    scorePage--;
+                    updateHighscore();
+                }
+
+            }
+        });
+
+        /*    --------------------------------------------------- *\
+                Highscore : Next
+        \*    --------------------------------------------------- */
+        interfaces['score'].next.click(() => {
+            if(currentPage == "score" && scorePage < levels.length){
+                if(scorePage+1 < levels.length){
+                    scorePage++;
+                    updateHighscore();
+                }
+            }
+        });
+
+
+        /*    --------------------------------------------------- *\
+                [function] spawnEntry(number, name, time, country)
+        
+                * Crée une entrée dans le tableau *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        var entry = null;
+        var entries = [];
+        function spawnEntry(){
+            if(data){
+                if(data.length == 0){
+                    // Aucune donnée à afficher
+                    entry = {};
+                    entry.label = new Render.Draw.Text(0, sY /2, "No score for this level, be the first !", sX, 50);
+                    entry.label.setColor("#FFFFFF");
+                    entry.label.setAlign("center");
+                    entry.label.setDepth(2);
+
+                    entries[0] = entry;
+
+                    for(var key in entry){
+                        mainCanvas.set(entry[key]);
+                    }
+                }
+
+                // maj des informations
+                var levelData = levels[scorePage];
+                interfaces['score'].time.setValue("Time: " + getFormatedTime(levelData.time).seconds + ":" + getFormatedTime(levelData.time).ms);
+                interfaces['score'].pointsMin.setValue("Minimum points: " + levelData.points);
+
+                for (var i = 0; i < data.length; i++) {
+                    entry = {};
+                    entry.background = new Render.Draw.Rectangle(150, 90 + (i * 60), sX - 240, 60);
+                    entry.background.setOpacity(0.3);
+                    entry.background.setDepth(2);
+                    entry.position = new Render.Draw.Text(170, 90 + (i * 60), "#" + (i + 1), 60, 60);
+                    entry.position.setFontSize(30);
+                    entry.position.setColor("#FFFFFF");                    
+                    entry.position.setDepth(3);
+                    entry.position.setRotation(-45);
+                    entry.name = new Render.Draw.Text(210, 90 + (i * 60), data[i].name, 200, 60);
+                    entry.name.setFontSize(20);
+                    entry.name.setColor("#FFFFFF");                    
+                    entry.name.setDepth(3);
+                    entry.name.setVerticalAlign("middle");
+                    entry.score = new Render.Draw.Text(300, 90 + (i * 60), data[i].score + " points", 200, 60);
+                    entry.score.setFontSize(20);
+                    entry.score.setColor("#FFFFFF");                    
+                    entry.score.setDepth(3);
+                    entry.score.setVerticalAlign("middle");
+
+                    entry.flag = new Render.Drawable(textures['flag_' + data[i].country], (sX - 240) + 150 - 55, 110 + (i * 60), 30, 20);
+                    entry.flag.setDepth(3);
+
+                    entries[i] = entry;
+
+                    for(var key in entry){
+                        mainCanvas.set(entry[key]);
+                    }
+                };
+
+                entry = null;
+            }
+            else{
+                // No data to show
+                console.log("NO DATA.");
+            }
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] clearSpawnEntries()
+        
+                * Delete toute les entries *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        function clearSpawnEntries(){
+            for (var i = entries.length - 1; i >= 0; i--){
+                for(var k in entries[i]){
+                    entries[i][k].setVisible(false);
+                    mainCanvas.del(entries[i]);                    
+                }
+            };
+
+            entries = [];
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] updateHighscore()
+        
+                * Met a jour le highscore *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        function updateHighscore(){
+            // Getting the data from the web.
+            clearSpawnEntries();
+            var request = new Global.XHR("http://" + requestDomain + "api/ktb_getScores/5/" + scorePage);
+            request.ready((d) => {
+                if(d.readyState == 4){
+                    data = JSON.parse(d.responseText);
+                    spawnEntry();            
+                }
+            });
+
+            if(scorePage == 0){
+                interfaces['score'].next.setVisible(true);
+                interfaces['score'].previous.setVisible(false);
+            }
+
+            if(scorePage > 0 && scorePage < levels.length){
+                interfaces['score'].next.setVisible(true);
+                interfaces['score'].previous.setVisible(true);
+
+            }
+
+            if(scorePage == levels.length -1){
+                interfaces['score'].next.setVisible(false);
+                interfaces['score'].previous.setVisible(true);
+            }
+
+            interfaces['score'].title.setValue("LEVEL " + scorePage);
+
+            interfaces['score'].next.setValue("Level " + (scorePage + 1));
+            interfaces['score'].previous.setValue("Level " + (scorePage - 1));
+        }
+
+        /*    --------------------------------------------------- *\
+                Score save
+        \*    --------------------------------------------------- */
+        interfaces['score_save'] = {};
+        interfaces['score_save'].background  = new Render.Drawable(textures['scoreBackground'], 0,0, sX, sY);
+        interfaces['score_save'].label = new Render.Draw.Text(sX / 2 - 200, sY / 2 - 50, "Enter your name here to save your   score:", 400, 35);
+        interfaces['score_save'].label.setColor("#FFFFFF");
+        interfaces['score_save'].label.setFontSize(20);
+        interfaces['score_save'].label.setAlign("center");
+        interfaces['score_save'].input = new UI.Field(sX / 2 - 150, sY / 2, 300, 35 );
+        interfaces['score_save'].submit = new UI.Button(sX / 2 - 150, sY / 2 + 55, 300, 35);
+        interfaces['score_save'].submit.setValue("Send my score");
+
+        hideInterface('score_save');
+
+
+        /*    --------------------------------------------------- *\
+                Score save : Submit
+        \*    --------------------------------------------------- */
+        var requestPending = false;
+        interfaces['score_save'].submit.click(() => {
+            if(currentPage == "scoreSave" && requestPending == false){
+                var inputValue = interfaces['score_save'].input.getValue();
+                if(inputValue.length != 0){
+                    if(temporarySave.length != 0){
+                        var dataToSend = temporarySave.join("-");
+                        var username = inputValue.replace(new RegExp("( )+", "g"), "");
+                        localStorage.setItem("playername", username);
+                        var request = new Global.XHR("http://" + requestDomain + "api/ktb_addScore/" + username + "/" + dataToSend);
+                        requestPending = true;
+                        request.ready((d) => {
+                            if(d.readyState == 4){
+                                requestPending = false;
+                                if(d.responseText == "ok"){
+                                    currentPage = "score";
+                                    fade(true, 800, () => {
+                                        hideInterface("score_save");
+                                        showInterface("score");
+
+                                        updateHighscore();
+                                        fade(false, 800, () => {
+
+                                        });
+                                    });
+                                }
+                                else{
+                                    alert("Couldn't save your score, server error.");
+                                }                                
+                            }                            
+                        });
+                    }
+                    else{
+                        console.log("NO DATA TO SAVE.");
+                    }
+                }
+                else{
+                    // revoke access
+                }
+            }
+        });
 
         /*    --------------------------------------------------- *\
                 Set all the interfaces on the screen.
@@ -944,4 +1257,4 @@ function startApp(){
         Render.setCamera(cam);
 
     });
-}
+}1

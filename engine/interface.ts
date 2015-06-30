@@ -4,6 +4,10 @@
 module UI{
 
     var fields = [];
+    var interfaceElement = document.createElement("div");
+    interfaceElement.style.zIndex = "100";
+    interfaceElement.style.position = "absolute";
+    document.body.appendChild(interfaceElement);
 
     /*    --------------------------------------------------- *\
             [class] GUI()
@@ -22,6 +26,8 @@ module UI{
         relativePosition: any;
         absolutePosition: any;
         guiType: string;
+        isHTML: boolean;
+        htmlElement: any;
 
         /*    --------------------------------------------------- *\
                 [function] constructor()
@@ -33,6 +39,8 @@ module UI{
         constructor(){
             super();
 
+            this.isHTML = false;
+            this.htmlElement = null;
             this.renderElements = [];
             this.parent = null;
             this.childrens = [];
@@ -121,51 +129,60 @@ module UI{
         \*    --------------------------------------------------- */
         setPosition(x: number, y: number){
 
-            // Check si l'element a un parent
-            if(this.getParent()){
-                // Il a un parent, on suppose que la position set est relative au parent
-                var parent = this.getParent();
-                var parentPosition = parent.getPosition(false);
+            if(!this.isHTML){
 
-                this.relativePosition = { x: x, y: y };
-                this.absolutePosition = { x: parentPosition.x + x, y: parentPosition.y + y };
+                // Check si l'element a un parent
+                if(this.getParent()){
+                    // Il a un parent, on suppose que la position set est relative au parent
+                    var parent = this.getParent();
+                    var parentPosition = parent.getPosition(false);
+
+                    this.relativePosition = { x: x, y: y };
+                    this.absolutePosition = { x: parentPosition.x + x, y: parentPosition.y + y };
+                }
+                else{
+                    // L'element n'a pas de parent, on suppose donc que sa position est relative à l'écran.
+                    // Ce qui veut dire qu'il a la même relative/absolute position.
+                    this.relativePosition = { x: x, y: y };
+                    this.absolutePosition = { x: x, y: y };
+                }
+
+                /*if(parameters[0] == true){
+                    this.relativePosition = { x: x, y: y };
+                }
+                else if(parameters[0] == false){
+                    this.absolutePosition = { x: x, y: y };
+                }*/
+                
+
+                for (var i in this.events) {
+                    var position = this.getPosition(false);
+                    this.events[i].x = position.x;
+                    this.events[i].y = position.y;
+                }
+
+                // move render elements
+                /*if(this.renderElements){
+                    for (var k = 0; k < this.renderElements.length; ++k) {
+                        //var newPosition = this.getPosition();
+                        this.renderElements[k].setPosition(x, y);
+                    }
+                }*/
+
+                // childrens
+                /*if(this.childrens){
+                    for (var z = this.childrens.length - 1; z >= 0; z--) {
+                        var childPosition = this.childrens[z].getPosition();
+                        this.childrens[z].setPosition(x + childPosition.x, y + childPosition.y, false);
+                    }
+                }*/
             }
             else{
-                // L'element n'a pas de parent, on suppose donc que sa position est relative à l'écran.
-                // Ce qui veut dire qu'il a la même relative/absolute position.
-                this.relativePosition = { x: x, y: y };
-                this.absolutePosition = { x: x, y: y };
+                this.htmlElement.style.position = "absolute";
+                this.htmlElement.style.top = y +"px";
+                this.htmlElement.style.left = x +"px";
+                           
             }
-
-            /*if(parameters[0] == true){
-                this.relativePosition = { x: x, y: y };
-            }
-            else if(parameters[0] == false){
-                this.absolutePosition = { x: x, y: y };
-            }*/
-            
-
-            for (var i in this.events) {
-                var position = this.getPosition(false);
-                this.events[i].x = position.x;
-                this.events[i].y = position.y;
-            }
-
-            // move render elements
-            /*if(this.renderElements){
-                for (var k = 0; k < this.renderElements.length; ++k) {
-                    //var newPosition = this.getPosition();
-                    this.renderElements[k].setPosition(x, y);
-                }
-            }*/
-
-            // childrens
-            /*if(this.childrens){
-                for (var z = this.childrens.length - 1; z >= 0; z--) {
-                    var childPosition = this.childrens[z].getPosition();
-                    this.childrens[z].setPosition(x + childPosition.x, y + childPosition.y, false);
-                }
-            }*/
         }
 
         /*    --------------------------------------------------- *\
@@ -198,9 +215,14 @@ module UI{
                 this.events[i].width = width;
                 this.events[i].height = height;
             }
+
+            if(this.isHTML){
+                this.htmlElement.style.width = width+"px";
+                this.htmlElement.style.height = height+"px";
+            }
         }
 
-        /*    --------------------------------------------------- *\
+          /*    --------------------------------------------------- *\
                 [function] setChildren(child)
         
                 * Set un enfant a l'element *
@@ -281,6 +303,10 @@ module UI{
             for (var i = 0; i < childrens.length; i++) {                
                 childrens[i].setOpacity(opacity);
             }
+
+            if(this.isHTML){
+                this.htmlElement.style.opacity = opacity;
+            }
         }
 
         /*    --------------------------------------------------- *\
@@ -300,6 +326,16 @@ module UI{
             var childrens = this.getChildrens();
             for (var i = 0; i < childrens.length; i++) {                
                 childrens[i].setVisible(value);
+            }
+
+            if(this.isHTML){
+                if(value){
+                    this.htmlElement.style.display = "block";
+                }
+                else{
+                    this.htmlElement.style.display = "none";
+                    
+                }
             }
         }
 
@@ -485,52 +521,19 @@ module UI{
         constructor(x :number, y : number, width : number, height : number, ...rest : any[]){
             super();
             this.guiType = "field";
+            this.isHTML = true;
+
+            this.htmlElement = document.createElement("input");
+            interfaceElement.appendChild(this.htmlElement);
+
 
             if (rest[0]) {
                 this.setParent(rest[0]);
             }
             this.setPosition(x, y);
             this.setSize(width, height);
-            this.value = "";
-            this.placeholder = "";
-
-            // shape
-            var position = this.getPosition(false);
-            this.renderElements[0] = new Render.Draw.Rectangle(position.x, position.y, width, height, "#FF0000");
-            this.renderElements[1] = new Render.Draw.Text(position.x + width/2, position.y + height/2, this.placeholder);
-            this.renderElements[1].setColor("#FFFFFF");
-            this.renderElements[1].setAlign("center");
-            this.renderElements[1].setBaseline("middle");
-
-            for (var i = 0; i < this.renderElements.length; ++i) {
-                interfaceCanvas.set(this.renderElements[i]);
-                this.renderElements[i].setDepth(10);
-            }
-            
-
-            // key
-            this.events.key = new Input.Key();
-            this.events.key.down((key) => {
-                if(this.isFocused(null)){
-                    if(key == "Backspace"){
-                        this.setValue(this.getValue().substring(0, this.getValue().length - 1));
-                    }
-                    else{
-                        this.setValue(this.getValue() + key);
-                    }
-                }
-            });
-
-            this.click(() => {
-                this.isFocused(true);
-            });
-            this.out(() => {
-                this.isFocused(false);
-            });
-
-
-            // Stocker le field
-            fields.push(this);
+            this.setValue("");
+            this.setPlaceholder("");
 
         }
 
@@ -559,7 +562,9 @@ module UI{
         \*    --------------------------------------------------- */
         setValue(value:string){
             this.value = value;
-            this.renderElements[1].setValue(value);
+            if(this.isHTML){
+                this.htmlElement.value = value;
+            }
         }
 
         /*    --------------------------------------------------- *\
@@ -570,7 +575,28 @@ module UI{
                 Return: value
         \*    --------------------------------------------------- */
         getValue(){
+            if(this.isHTML){
+                var htmlValue = this.htmlElement.value;
+                if(htmlValue != this.value){
+                    this.setValue(htmlValue);
+                }
+            }
+
             return this.value;
+        }
+
+        /*    --------------------------------------------------- *\
+                [function] setPlaceholder(placeholder)
+        
+                * Set le placeholder sur l'input *
+        
+                Return: nil
+        \*    --------------------------------------------------- */
+        setPlaceholder(placeholder : string){
+            this.placeholder = placeholder;
+            if(this.isHTML){
+                this.htmlElement.placeholder = placeholder;
+            }
         }
 
 
