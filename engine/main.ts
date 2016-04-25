@@ -37,7 +37,7 @@ var ratio = sX/sY;
 var world = new Scene();
 var cam = new Camera(world);
 cam.setPosition(sX / 2, sY / 2);
-var requestDomain = "local.dev/perso/williamdasilva/";
+var requestDomain = "www.williamdasilva.fr/";
 
 new Fonts.FontFace("unfortunate", "fonts/unfortunate.ttf");
 
@@ -297,15 +297,17 @@ function startApp(){
         \*    --------------------------------------------------- */
         var muteEvent = new Input.Click(10, sY - 42, 32, 32, () => {
             if(currentPage == "menu"){
-                for (var i in sounds) {
-                    if(sounds[i].isMute()){
-                        sounds[i].unmute();
-                        interfaces['menu'].mute.setCurrentFrame(0);
-                    }
-                    else{
-                        sounds[i].mute();
-                        interfaces['menu'].mute.setCurrentFrame(1);
-                    }
+                if(Sounds.isEnabled()){
+                    for (var i in sounds) {
+                        if(sounds[i].isMute()){
+                            sounds[i].unmute();
+                            interfaces['menu'].mute.setCurrentFrame(0);
+                        }
+                        else{
+                            sounds[i].mute();
+                            interfaces['menu'].mute.setCurrentFrame(1);
+                        }
+                    }                    
                 }
             }
         });
@@ -968,6 +970,7 @@ function startApp(){
         interfaces['sound'].no.click(() => {
             if(currentPage == "sound"){
                 Sounds.setEnabled(false);
+                interfaces['menu'].mute.setCurrentFrame(1);
                 fade(true, 500, () => {
                     hideInterface("sound");
                     showInterface("menu");
@@ -1156,7 +1159,10 @@ function startApp(){
             clearSpawnEntries();
             var request = new Global.XHR("http://" + requestDomain + "api/ktb_getScores/5/" + scorePage);
             request.ready((d) => {
-                if(d.readyState == 4){
+                if(d.status == 0 && d.statusText == ""){
+                    alert("Couldn't get the highscore. Server error.");
+                }
+                if(d.readyState == 4 && d.status == 200){
                     data = JSON.parse(d.responseText);
                     spawnEntry();            
                 }
@@ -1228,10 +1234,7 @@ function startApp(){
 
                                         });
                                     });
-                                }
-                                else{
-                                    alert("Couldn't save your score, server error.");
-                                }                                
+                                }                              
                             }                            
                         });
                     }
@@ -1241,6 +1244,7 @@ function startApp(){
                 }
                 else{
                     // revoke access
+                    alert("Please, enter your name / username.");
                 }
             }
         });

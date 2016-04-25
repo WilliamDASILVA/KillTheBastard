@@ -23,6 +23,17 @@ module Sounds{
 	}
 
 	/*	--------------------------------------------------- *\
+			[function] isEnabled()
+	
+			* Retourne si le son est activé ou non *
+	
+			Return: true, false
+	\*	--------------------------------------------------- */
+	export function isEnabled():boolean{
+		return soundEnabled;
+	}
+
+	/*	--------------------------------------------------- *\
 			[class] Sound()
 	
 			* Crée un son *

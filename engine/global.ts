@@ -115,6 +115,9 @@ module Global{
             this.functionsToCallWhenReady = [];
             this.functionsToCallWhenLoaded = [];
 
+
+            //this.request = new XDomainRequest() ||; 
+
             try{
                 this.request = new XMLHttpRequest();
             }
@@ -135,6 +138,7 @@ module Global{
                 requestType = parameters[0];
             }
 
+            console.log(requestType, target);
             this.request.open(requestType, target, true);            
 
             if(parameters[1]){
@@ -142,10 +146,10 @@ module Global{
             }
 
             this.request.send(null);
-            this.request.addEventListener("readystatechange", () => {
+            this.request.addEventListener("readystatechange", (response) => {
                 if(this.functionsToCallWhenReady){
                     for (var i = 0; i < this.functionsToCallWhenReady.length; i++) {
-                        this.functionsToCallWhenReady[i](this.request);
+                        this.functionsToCallWhenReady[i](this.request, response);
                     }
                 }
             });
